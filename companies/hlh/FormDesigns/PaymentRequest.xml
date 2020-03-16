@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form name="Payment Voucher">
+	<PaperSize name="Paper size">A4</PaperSize>
+	<LineHeight name="Line height">14</LineHeight>
+	<logo type="image" name="Logo" id="Logo">
+		<x>0</x>
+		<y>62</y>
+		<width>0</width>
+		<height>60</height>
+	</logo>
+	<OrderNumber type="SimpleText" name="Order Number" id="OrderNumber">
+		<FontSize>15</FontSize>
+		<x>200</x>
+		<y>46</y>
+	</OrderNumber>
+	<ViewingOnly type="SimpleText" name="Viewing only warning text" id="ViewingOnly">
+		<FontSize>16</FontSize>
+		<x>200</x>
+		<y>62</y>
+	</ViewingOnly>
+	<PageNumber type="SimpleText" name="Page number" id="PageNumber">
+		<FontSize>10</FontSize>
+		<x>495</x>
+		<y>30</y>
+	</PageNumber>
+	<TaxAuthority type="SimpleText" name="Tax Authority" id="TaxAuthority">
+		<FontSize>10</FontSize>
+		<x>70</x>
+		<y>106</y>
+	</TaxAuthority>
+	<CompanyName type="SimpleText" name="Company name" id="CompanyName">
+		<FontSize>10</FontSize>
+		<x>70</x>
+		<y>122</y>
+	</CompanyName>
+	<CompanyAddress type="ElementArray" name="Company address">
+		<Line1 type="SimpleText" name="Line 1" id="CompanyAddress1">
+			<FontSize>10</FontSize>
+			<x>70</x>
+			<y>136</y>
+		</Line1>
+		<Line2 type="SimpleText" name="Line 2" id="CompanyAddress2">
+			<FontSize>10</FontSize>
+			<x>70</x>
+			<y>150</y>
+		</Line2>
+		<Line3 type="SimpleText" name="Line 3" id="CompanyAddress3">
+			<FontSize>10</FontSize>
+			<x>70</x>
+			<y>164</y>
+		</Line3>
+		<Line4 type="SimpleText" name="Line 4" id="CompanyAddress4">
+			<FontSize>10</FontSize>
+			<x>70</x>
+			<y>178</y>
+		</Line4>
+		<Line5 type="SimpleText" name="Line 5" id="CompanyAddress5">
+			<FontSize>10</FontSize>
+			<x>70</x>
+			<y>192</y>
+		</Line5>
+	</CompanyAddress>
+	<CompanyPhone type="SimpleText" name="Company phone number" id="CompanyPhone">
+		<FontSize>10</FontSize>
+		<x>350</x>
+		<y>122</y>
+	</CompanyPhone>
+	<CompanyFax type="SimpleText" name="Company fax number" id="CompanyFax">
+		<FontSize>10</FontSize>
+		<x>350</x>
+		<y>136</y>
+	</CompanyFax>
+	<CompanyEmail type="SimpleText" name="Company email address" id="CompanyEmail">
+		<FontSize>10</FontSize>
+		<x>350</x>
+		<y>150</y>
+	</CompanyEmail>
+	
+	<PayeeName type="SimpleText" name="Payee name" id="PayeeName">
+		<FontSize>12</FontSize>
+		<x>40</x>
+		<y>210</y>
+	</PayeeName>
+        <suppname type="SimpleText" name="Supplier name" id="suppname">
+		<FontSize>12</FontSize>
+		<x>40</x>
+		<y>210</y>
+	</suppname>
+	
+        <Currency type="SimpleText" name="Supplier name" id="Currency">
+		<FontSize>12</FontSize>
+		<x>40</x>
+		<y>180</y>
+	</Currency>
+    <LineBetween type="Line" name="Line Above Footer" id="LineBetween">
+		<startx>460</startx>
+		<starty>240</starty>
+		<endy>710</endy>
+		<endx>460</endx>
+	</LineBetween>
+	<HeaderRectangle type="Rectangle" name="Header rectangle" id="HeaderRectangle">
+		<x>40</x>
+		<y>240</y>
+		<width>525</width>
+		<height>32</height>
+	</HeaderRectangle>
+	<Headings type="ElementArray" name="Column headings">
+		<Column1 type="SimpleText" name="Heading 1" id="Heading1">
+			<FontSize>10</FontSize>
+			<x>41</x>
+			<y>245</y>
+		</Column1>
+		<Column2 type="SimpleText" name="Heading 2" id="Heading2">
+			<FontSize>10</FontSize>
+			<x>460</x>
+			<y>245</y>
+		</Column2>
+		
+	</Headings>
+	<DataRectangle type="Rectangle" name="Data rectangle" id="DataRectangle">
+		<x>40</x>
+		<y>240</y>
+		<width>525</width>
+		<height>470</height>
+	</DataRectangle>
+	<Data type="ElementArray" name="Column Data">
+		<y type="StartLine" name="Y co-ordinate of first data line" id="DataStartLine">290</y>
+		<Column1 type="DataText" name="Column 1" id="Data1">
+			<FontSize>12</FontSize>
+			<x>40</x>
+			<Length>400</Length>
+		</Column1>
+		<Column2 type="DataText" name="Column 2" id="Data2">
+			<FontSize>10</FontSize>
+			<x>460</x>
+			<Length>80</Length>
+		</Column2>
+		
+	</Data>
+	<TotalRectangle type="Rectangle" name="Header rectangle" id="TotalRectangle">
+		<x>270</x>
+		<y>710</y>
+		<width>295</width>
+		<height>25</height>
+	</TotalRectangle>
+	<LineBetweenTotal type="Line" name="Line Above Footer" id="LineBetween">
+		<startx>460</startx>
+		<starty>710</starty>
+		<endy>735</endy>
+		<endx>460</endx>
+	</LineBetweenTotal>
+	<OrderTotalCaption type="SimpleText" name="Order total caption" id="OrderTotalCaption">
+		<FontSize>12</FontSize>
+		<x>270</x>
+		<y>720</y>
+	</OrderTotalCaption>
+	<RequestTotal type="SimpleText" name="Order total" id="RequestTotal">
+		<FontSize>12</FontSize>
+		<x>460</x>
+		<y>730</y>
+    </RequestTotal>
+    <RequestDate type="SimpleText" name="Request date" id="Requested Date">
+		<FontSize>9</FontSize>
+		<x>20</x>
+		<y>750</y>
+	</RequestDate>
+	<Initiator type="SimpleText" name="Order initiator" id="Initiator">
+		<FontSize>9</FontSize>
+		<x>20</x>
+		<y>770</y>
+	</Initiator>
+        <AuthorisedDate type="SimpleText" name="Authorised Date" id="AuthorisedDate">
+		<FontSize>9</FontSize>
+		<x>150</x>
+		<y>750</y>
+	</AuthorisedDate>
+        <Authoriser type="SimpleText" name="Authoriser" id="Authoriser">
+		<FontSize>9</FontSize>
+		<x>150</x>
+		<y>770</y>
+	</Authoriser>
+	<PaidDate type="SimpleText" name="Paid Date" id="PaidDate">
+		<FontSize>9</FontSize>
+		<x>280</x>
+		<y>750</y>
+	</PaidDate>
+	<PaidBy type="SimpleText" name="PaidBy" id="PaidBy">
+		<FontSize>9</FontSize>
+		<x>280</x>
+		<y>770</y>
+	</PaidBy>
+        <ReceivedDate type="SimpleText" name="Received Date" id="ReceivedDate">
+		<FontSize>9</FontSize>
+                <x>430</x>
+		<y>750</y>
+	</ReceivedDate>
+	<Receiver type="SimpleText" name="Receiver Name" id="Receiver">
+		<FontSize>9</FontSize>
+		<x>430</x>
+		<y>770</y>
+	</Receiver>
+        <Supplier type="SimpleText" name="Supplier Name" id="Supplier">
+		<FontSize>9</FontSize>
+		<x>430</x>
+		<y>770</y>
+	</Supplier>
+        
+        <SignedFor type="SimpleText" name="Supplier Name" id="SignedFor">
+		<FontSize>9</FontSize>
+		<x>280</x>
+		<y>790</y>
+	</SignedFor>
+        
+        <SignedBy type="SimpleText" name="Supplier Name" id="SignedBy">
+		<FontSize>9</FontSize>
+		<x>430</x>
+		<y>790</y>
+	</SignedBy>
+</form>
