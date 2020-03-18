@@ -152,10 +152,10 @@ $LineCount = 0;
 $pdf->addText($Left_Margin, $YPos, $FontSize, _('Sold To') . ':');
 
 if($InvOrCredit=='Invoice') {
-	$pdf->addText($XPos, $YPos, $FontSize, _('Payment should be made to the account') . ':');
-	$FontSize = 8;
-	$LineHeight = 10;
-	$XPos += 5;
+	$pdf->addText($XPos, $YPos, $FontSize, _('Delivered To (check Dispatch Detail)') . ':');
+	$FontSize = 10;
+	$LineHeight = 13;
+	$XPos += 20;
 	$LineCount += 1;
 
     // Before trying to call htmlspecialchars_decode, check that its supported, if not substitute a compatible version
@@ -174,17 +174,13 @@ if($InvOrCredit=='Invoice') {
         }
     }
 
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, _('Bank Name') . ': ' . $_SESSION['CompanyRecord']['coyname']);
+	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($myrow['deliverto']));
 	$LineCount += 1;
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($BankAccountCode));
+	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($myrow['deladd1']));
 	$LineCount += 1;
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($BankAccountNumber));
+	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($myrow['deladd2']));
 	$LineCount += 1;
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($BankCurrency));
-	$LineCount += 1;
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($BankSwift));
-	$LineCount += 1;
-	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($BankAddress));
+	$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, html_entity_decode($myrow['deladd3']) . '  ' . html_entity_decode($myrow['deladd4']) . '  ' . html_entity_decode($myrow['deladd5']) . ' ' . html_entity_decode($myrow['deladd6']));
 }
 else {
 /* then its a credit note */
