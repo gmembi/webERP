@@ -65,24 +65,32 @@ if(isset($PrintPDF)
 	nobble the invoice reprints */
 
 	// check if the user has set a default bank account for invoices, if not leave it blank
-		$sql = "SELECT bankaccounts.invoice,
+		$sql = "SELECT debtortrans.accountcode,
 					bankaccounts.bankaccountnumber,
-					bankaccounts.bankaccountcode
-				FROM bankaccounts
-				WHERE bankaccounts.invoice = '1'";
+					bankaccounts.bankaccountcode,
+					bankaccounts.currcode,
+					bankaccounts.swiftcode,
+					bankaccounts.bankaddress
+				FROM debtortrans
+				INNER JOIN bankaccounts ON bankaccounts.accountcode = debtortrans.accountcode
+				WHERE debtortrans.transno='" . $FromTransNo . "'";
 		$result=DB_query($sql,'','',false,false);
 		if(DB_error_no()!=1) {
 			if(DB_num_rows($result)==1) {
 				$myrow = DB_fetch_array($result);
-				$DefaultBankAccountNumber = _('Account') .': ' .$myrow['bankaccountnumber'];
-				$DefaultBankAccountCode = _('Bank Code:') .' ' .$myrow['bankaccountcode'];
+				$BankAccountNumber = _('Account') .': ' .$myrow['bankaccountnumber'];
+				$BankAccountCode = _('Bank Code:') .' ' .$myrow['bankaccountcode'];
+				$BankCurrency = _('Currency') .': ' .$myrow['currcode'];
+				$BankSwift = _('Swift Code:') .' ' .$myrow['swiftcode'];
+				$BankAddress = _('Address') .': ' .$myrow['bankaddress'];
+				
 			} else {
-				$DefaultBankAccountNumber = '';
-				$DefaultBankAccountCode = '';
+				$BankAccountNumber = '';
+				$BankAccountCode = '';
 			}
 		} else {
-			$DefaultBankAccountNumber = '';
-			$DefaultBankAccountCode = '';
+			$BankAccountNumber = '';
+			$BankAccountCode = '';
 		}
 // gather the invoice data
 
@@ -96,6 +104,7 @@ if(isset($PrintPDF)
 							debtortrans.invtext,
 							debtortrans.consignment,
 							debtortrans.packages,
+							debtortrans.accountcode,
 							debtorsmaster.name,
 							debtorsmaster.address1,
 							debtorsmaster.address2,
@@ -471,7 +480,7 @@ if(isset($PrintPDF)
 		$FontSize =8;
 		$LeftOvers=explode("\r\n",DB_escape_string($myrow['invtext']));
 		for ($i=0;$i<sizeOf($LeftOvers);$i++) {
-			$pdf->addTextWrap($Left_Margin, $YPos-8-($i*8), 290, $FontSize, $LeftOvers[$i]);
+			$pdf->addTextWrap($Left_Margin, $YPos-5-($i*8), 290, $FontSize, $LeftOvers[$i]);
 		}
 		$FontSize = 10;
 
@@ -493,16 +502,16 @@ if(isset($PrintPDF)
 		$YPos+=10;
 		if($InvOrCredit=='Invoice') {
 			/* Print out the payment terms */
-			$pdf->addTextWrap($Left_Margin, $YPos-5, 280, $FontSize,_('Payment Terms') . ': ' . $myrow['terms']);
+			//$pdf->addTextWrap($Left_Margin, $YPos-5, 280, $FontSize,_('Payment Terms') . ': ' . $myrow['terms']);
 
 			$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $Bottom_Margin+5, 144, $FontSize, _('TOTAL INVOICE'));
 
 			$FontSize=8;
-			$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$_SESSION['RomalpaClause']);
-			while(mb_strlen($LeftOvers)>0 AND $YPos > $Bottom_Margin) {
-				$YPos -=10;
-				$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$LeftOvers);
-			}
+			// $LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$_SESSION['RomalpaClause']);
+			// while(mb_strlen($LeftOvers)>0 AND $YPos > $Bottom_Margin) {
+			// 	$YPos -=10;
+			// 	$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$LeftOvers);
+			// }
 
 			/* Add Images for Visa / Mastercard / Paypal */
 			if(file_exists('companies/' . $_SESSION['DatabaseName'] . '/payment.jpg')) {
@@ -510,7 +519,7 @@ if(isset($PrintPDF)
 			}
 
 			// Print Bank acount details if available and default for invoices is selected
-			$pdf->addText($Left_Margin, $YPos+22-$line_height*3, $FontSize, $DefaultBankAccountCode . ' ' . $DefaultBankAccountNumber);
+			//$pdf->addText($Left_Margin, $YPos+22-$line_height*4, $FontSize, $BankAccountCode . ' ' . $BankAccountNumber);
 			$FontSize=10;
 		} else {
 			$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $Bottom_Margin+5, 144, $FontSize, _('TOTAL CREDIT'));
