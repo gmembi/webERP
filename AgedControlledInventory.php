@@ -17,6 +17,7 @@ $sql = "SELECT stockserialitems.stockid,
 				stockmaster.description,
 				stockserialitems.serialno,
 				stockserialitems.quantity,
+				stockserialitems.expirationdate,
 				stockmoves.trandate,
 				stockmaster.units,
 				stockmaster.materialcost+stockmaster.labourcost+stockmaster.overheadcost AS cost,
@@ -54,6 +55,7 @@ echo '<table>
 			<th class="ascending">', _('Inventory Value'), '</th>
 			<th class="ascending">', _('Date'), '</th>
 			<th class="ascending">', _('Days Old'), '</th>
+			<th class="ascending">', _('Expiry Date'), '</th>
 			</tr>
 		</thead>
 		<tbody>';
@@ -78,6 +80,7 @@ while ($LocQtyRow=DB_fetch_array($LocStockResult)) {
 			<td class="number">%s</td>
 			<td>%s</td>
 			<td class="number">%s</td>
+			<td>%s</td>
 		</tr>',
 			mb_strtoupper($LocQtyRow['stockid']),
 			$LocQtyRow['description'],
@@ -86,7 +89,8 @@ while ($LocQtyRow=DB_fetch_array($LocStockResult)) {
 			$LocQtyRow['units'],
 			$DispVal,
 			ConvertSQLDate($LocQtyRow['createdate']),
-			$DaysOld
+			$DaysOld,
+			ConvertSQLDate($LocQtyRow['expirationdate'])
 		);
 } //while
 

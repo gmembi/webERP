@@ -321,7 +321,7 @@ if(isset($PrintPDF)
 
 			include('includes/PDFTransPageHeaderPortrait.inc');
 			$FirstPage = False;
-
+            $pdf->SetFont('times', 'I', 12);
 			while($myrow2=DB_fetch_array($result)) {
 				if($myrow2['discountpercent'] == 0) {
 					$DisplayDiscount = '';
@@ -333,7 +333,7 @@ if(isset($PrintPDF)
 				$DisplayPrice = locale_number_format($myrow2['fxprice'],$myrow['decimalplaces']);
 				$DisplayQty = locale_number_format($myrow2['quantity'],$myrow2['decimalplaces']);
 
-				$LeftOvers = $pdf->addTextWrap($Left_Margin+5,$YPos,71,$FontSize,$myrow2['stockid']);// Print item code.
+				$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,71,$FontSize,$myrow2['stockid']);// Print item code.
 				//Get translation if it exists
 				$TranslationResult = DB_query("SELECT descriptiontranslation
 												FROM stockdescriptiontranslations
@@ -354,10 +354,9 @@ if(isset($PrintPDF)
 				}
 
 				$LeftOvers = $pdf->addTextWrap($Left_Margin+270,$YPos,76,$FontSize,$DisplayPrice,'right');
-				$LeftOvers = $pdf->addTextWrap($Left_Margin+350,$YPos,36,$FontSize,$DisplayQty,'right');
-				$LeftOvers = $pdf->addTextWrap($Left_Margin+390,$YPos,26,$FontSize,$myrow2['units'],'center');
-				$LeftOvers = $pdf->addTextWrap($Left_Margin+420,$YPos,26,$FontSize,$DisplayDiscount,'right');
-				$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos, 72, $FontSize, $DisplayNet, 'right');
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+380,$YPos,36,$FontSize,$DisplayQty,'right');
+
+				$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-62, $YPos, 72, $FontSize, $DisplayNet, 'right');
 
 				if($myrow2['controlled']==1) {
 
@@ -393,7 +392,7 @@ if(isset($PrintPDF)
 					}
 				}
 				$YPos -= ($FontSize*$lines);
-
+                
 				$lines=explode("\r\n",htmlspecialchars_decode($myrow2['narrative']));
 				for ($i=0;$i<sizeOf($lines);$i++) {
 					while(mb_strlen($lines[$i])>1) {
@@ -425,31 +424,31 @@ if(isset($PrintPDF)
 		$YPos -= $line_height;
 
 		/* check to see enough space left to print the 4 lines for the totals/footer */
-		if(($YPos-$Bottom_Margin)<(2*$line_height)) {
+		if(($YPos-$Bottom_Margin)<(4*$line_height)) {
 			PrintLinesToBottom ();
 			include ('includes/PDFTransPageHeaderPortrait.inc');
 		}
 		/*Print a column vertical line with enough space for the footer*/
 		/*draw the vertical column lines to 4 lines shy of the bottom
 		to leave space for invoice footer info ie totals etc*/
-		$pdf->line($Left_Margin+78, $TopOfColHeadings,$Left_Margin+78,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+78, $TopOfColHeadings,$Left_Margin+78,$Bottom_Margin+(4*$line_height));
 
 		/*Print a column vertical line */
-		$pdf->line($Left_Margin+268, $TopOfColHeadings,$Left_Margin+268,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+268, $TopOfColHeadings,$Left_Margin+268,$Bottom_Margin+(4*$line_height));
 
 		/*Print a column vertical line */
-		$pdf->line($Left_Margin+348, $TopOfColHeadings,$Left_Margin+348,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+348, $TopOfColHeadings,$Left_Margin+348,$Bottom_Margin+(4*$line_height));
 
 		/*Print a column vertical line */
-		$pdf->line($Left_Margin+388, $TopOfColHeadings,$Left_Margin+388,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+388, $TopOfColHeadings,$Left_Margin+388,$Bottom_Margin+(4*$line_height));
 
 		/*Print a column vertical line */
-		$pdf->line($Left_Margin+418, $TopOfColHeadings,$Left_Margin+418,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+418, $TopOfColHeadings,$Left_Margin+418,$Bottom_Margin+(4*$line_height));
 
-		$pdf->line($Left_Margin+448, $TopOfColHeadings,$Left_Margin+448,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin+448, $TopOfColHeadings,$Left_Margin+448,$Bottom_Margin+(4*$line_height));
 
 		/*Rule off at bottom of the vertical lines */
-		$pdf->line($Left_Margin, $Bottom_Margin+(4*$line_height),$Page_Width-$Right_Margin,$Bottom_Margin+(4*$line_height));
+		//$pdf->line($Left_Margin, $Bottom_Margin+(4*$line_height),$Page_Width-$Right_Margin,$Bottom_Margin+(4*$line_height));
 
 		/*Now print out the footer and totals */
 
@@ -465,44 +464,47 @@ if(isset($PrintPDF)
 			$DisplayTotal = locale_number_format(-$myrow['ovfreight']-$myrow['ovgst']-$myrow['ovamount'],$myrow['decimalplaces']);
 		}
 
-		$YPos = $Bottom_Margin+(3*$line_height);
+		$YPos = $Bottom_Margin+(2*$line_height);
 
 	/*Print out the invoice text entered */
 		$FontSize =8;
+		
 		$LeftOvers=explode("\r\n",DB_escape_string($myrow['invtext']));
 		for ($i=0;$i<sizeOf($LeftOvers);$i++) {
-			$pdf->addTextWrap($Left_Margin, $YPos-8-($i*8), 290, $FontSize, $LeftOvers[$i]);
+			$pdf->addTextWrap($Left_Margin, $YPos+8-($i*8), 290, $FontSize, $LeftOvers[$i]);
 		}
 		$FontSize = 10;
 
+		$pdf->SetFont('times', '', 12);
 		$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $YPos+5, 72, $FontSize, _('Sub Total'));
 		$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos+5, 72, $FontSize, $DisplaySubTot, 'right');
 
-		$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $YPos+5-$line_height, 72, $FontSize, _('Freight'));
-		$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos+5-$line_height, 72, $FontSize, $DisplayFreight, 'right');
 
-		$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $YPos+5-$line_height*2, 72, $FontSize, _('Tax'));
-		$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos+5-$line_height*2, 72, $FontSize, $DisplayTax, 'right');
+		$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $YPos+5-$line_height, 72, $FontSize, _('Tax'));
+		$LeftOvers = $pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos+5-$line_height, 72, $FontSize, $DisplayTax, 'right');
 
 		/*rule off for total */
 		$pdf->line($Page_Width-$Right_Margin-222, $YPos-(2*$line_height),$Page_Width-$Right_Margin,$YPos-(2*$line_height));
 
 		/*vertical to separate totals from comments and ROMALPA */
-		$pdf->line($Page_Width-$Right_Margin-222, $YPos+$line_height,$Page_Width-$Right_Margin-222,$Bottom_Margin);
+		$pdf->line($Page_Width-$Right_Margin-222, $YPos+$line_height+8,$Page_Width-$Right_Margin-222,$Bottom_Margin);
+
+		/*vertical to separate totals from comments and ROMALPA */
+		$pdf->line($Page_Width-$Right_Margin, $YPos+$line_height+8,$Page_Width-$Right_Margin,$Bottom_Margin);
 
 		$YPos+=10;
 		if($InvOrCredit=='Invoice') {
 			/* Print out the payment terms */
-			$pdf->addTextWrap($Left_Margin, $YPos-5, 280, $FontSize,_('Payment Terms') . ': ' . $myrow['terms']);
-
+			//$pdf->addTextWrap($Left_Margin, $YPos-5, 280, $FontSize,_('Payment Terms') . ': ' . $myrow['terms']);
+            $pdf->SetFont('times', 'B', 12);
 			$LeftOvers = $pdf->addTextWrap($Page_Width-$Right_Margin-220, $Bottom_Margin+5, 144, $FontSize, _('TOTAL INVOICE'));
 
 			$FontSize=8;
-			$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$_SESSION['RomalpaClause']);
-			while(mb_strlen($LeftOvers)>0 AND $YPos > $Bottom_Margin) {
-				$YPos -=10;
-				$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$LeftOvers);
-			}
+			//$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$_SESSION['RomalpaClause']);
+			//while(mb_strlen($LeftOvers)>0 AND $YPos > $Bottom_Margin) {
+			//	$YPos -=10;
+				//$LeftOvers = $pdf->addTextWrap($Left_Margin, $YPos-18,290,$FontSize,$LeftOvers);
+			//}
 
 			/* Add Images for Visa / Mastercard / Paypal */
 			if(file_exists('companies/' . $_SESSION['DatabaseName'] . '/payment.jpg')) {

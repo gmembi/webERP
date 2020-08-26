@@ -5,7 +5,6 @@ Class StockRequest {
 	var $LineItems; /*array of objects of class LineDetails using the product id as the pointer */
 	var $DispatchDate;
 	var $Location;
-	var $Department;
 	var $Narrative;
 	var $LineCounter=0;
 

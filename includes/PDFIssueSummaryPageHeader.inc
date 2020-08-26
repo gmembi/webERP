@@ -1,63 +1,116 @@
 <?php
-$PageNumber++;
-if ($PageNumber>1){
+
+/*	Please note that addTextWrap() prints a font-size-height further down than
+	addText() and other functions. Use addText() instead of addTextWrap() to
+	print left aligned elements.*/
+
+if(!$FirstPage) { /* only initiate a new page if its not the first */
 	$pdf->newPage();
 }
 
-$YPos = $Page_Height - $Top_Margin - 40;
+$YPos = $Page_Height-$Top_Margin;
 
-$XPos = $Page_Width/2 - 20;
+// Company Logo:
+/*$pdf->addJpegFromFile($_SESSION['LogoFile'], $Left_Margin, $YPos-60, 0, 65);*/
+$pdf->Image(
+	$_SESSION['LogoFile'],// Name of the file containing the image.
+	$Left_Margin,// Abscissa from left border to the upper-left corner (LTR).
+	$Page_Height -($YPos-60) -(35),// Ordinate from top border to the upper-left corner (LTR).
+	0,// Width of the image in the page. If not specified or equal to zero, it is automatically calculated.
+	65,// Height of the image in the page. If not specified or equal to zero, it is automatically calculated.
+	''// Image format. If not specified, the type is inferred from the file extension.
+);// Public function Image() in ~/includes/tcpdf/tcpdf.php.
 
-$pdf->addJpegFromFile($_SESSION['LogoFile'],$Left_Margin,$YPos,0,40);
+$FontSize =15;
+if($InvOrCredit=='Invoice') {
 
-$FontSize=5;
-$pdf->addText($Right_Margin - 90, $YPos + 40, $FontSize, _('TIN') . ' # :'  . $_SESSION['CompanyRecord']['gstno']);
-$pdf->addText($Right_Margin - 90, $YPos + 33, $FontSize, $_SESSION['CompanyRecord']['regoffice1']);
-$pdf->addText($Right_Margin - 90, $YPos + 26, $FontSize, $_SESSION['CompanyRecord']['regoffice2']);
-$pdf->addText($Right_Margin - 90, $YPos + 19, $FontSize, _('Phone') . ':' . $_SESSION['CompanyRecord']['telephone']);
-$pdf->addText($Right_Margin - 90, $YPos + 12, $FontSize, _('Email') . ':' . $_SESSION['CompanyRecord']['email']);
+	$pdf->addText($Page_Width/2 - 140, $YPos, $FontSize, _('COMBINED REQUSITION AND ISSUE NOTE') . ' ');
+} else {
+	$pdf->addText($Page_Width/2 - 60, $YPos, $FontSize, _('TAX CREDIT NOTE') . ' ');
+}
+
+// Prints page number:
+$FontSize = 10;
+$YPos -= $FontSize; //Downs one line height mesure (addText position is from left-bottom).
+$pdf->addTextWrap($Page_Width-$Left_Margin-72, $YPos, 72, $FontSize, _('Page') . ' ' . $PageNumber, 'right');
 
 
-$FontSize=14;
 
-$XPos = $Page_Width/2 - 30;
+/*Now print out company info at the top left */
 
-$pdf->addText($XPos, $YPos - 10,$FontSize, _('ISSUE NOTE'));
-$FontSize=12;
-$pdf->addText($Left_Margin, $YPos - 35,$FontSize, _('Issue Note') . ' # :' . $_POST['IssueNo']);
-$pdf->addText($XPos+ 30, $YPos - 35,$FontSize, _('Date') .' : ' . ConvertSQLDate($myrow['dispatchdate']));
+$XPos = $Left_Margin +200;
+$YPos = $Page_Height - $Top_Margin - 30;
 
-$pdf->addText($Left_Margin, $YPos - 55,$FontSize, _('Name').' : ');
+$FontSize = 10;
+$LineHeight = 13;
+$LineCount = 0;
 
-$XPos = $Page_Width-$Right_Margin-50;
-$YPos -=65;
+$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, $_SESSION['CompanyRecord']['coyname']);
 
-$FontSize=8;
+$FontSize = 12;
+$LineHeight = 14;
 
-$YPos -=$line_height;
+if($_SESSION['CompanyRecord']['regoffice1'] <> '') {
+  $LineCount += 1;
+  $pdf->addText($XPos, $YPos-$LineCount*$LineHeight,$FontSize, $_SESSION['CompanyRecord']['regoffice1']);
+}
+if($_SESSION['CompanyRecord']['regoffice2'] <> '') {
+  $LineCount += 1;
+  $pdf->addText($XPos, $YPos-$LineCount*$LineHeight,$FontSize, $_SESSION['CompanyRecord']['regoffice2']);
+}
+if(($_SESSION['CompanyRecord']['regoffice3'] <> '') OR ($_SESSION['CompanyRecord']['regoffice4'] <> '') OR ($_SESSION['CompanyRecord']['regoffice5'] <> '')) {
+  $LineCount += 1;
+  $pdf->addText($XPos, $YPos-$LineCount*$LineHeight,$FontSize, $_SESSION['CompanyRecord']['regoffice3'] . '  ' . $_SESSION['CompanyRecord']['regoffice4'] . '  ' . $_SESSION['CompanyRecord']['regoffice5']);  // country in 6 not printed
+}
+
+$XPos = $Left_Margin +400;
+$YPos = $Page_Height - $Top_Margin - 70;
+
+$FontSize = 14;
+$LineHeight = 13;
+$LineCount = 0;
+
+$pdf->addText($XPos, $YPos-$LineCount*$LineHeight, $FontSize, _('Request No') . ': ' . $RequestNo, 'right');
+
+
+
 $XPos = $Left_Margin;
+$YPos = $Page_Height - $Top_Margin - 100 ;
 
-/*draw a square grid for entering line items */
-$pdf->line($XPos, $YPos,$Page_Width-$Right_Margin, $YPos);
-$pdf->line($Page_Width-$Right_Margin, $YPos,$Page_Width-$Right_Margin, $Bottom_Margin + 30);
-$pdf->line($Page_Width-$Right_Margin - 70, $YPos,$Page_Width-$Right_Margin - 70, $Bottom_Margin + 30);
-$pdf->line($Page_Width-$Right_Margin, $Bottom_Margin + 30,$XPos, $Bottom_Margin + 30);
-$pdf->line($XPos, $Bottom_Margin + 30,$XPos, $YPos);
+$pdf->addText($Left_Margin, $YPos-8, $FontSize, _('Department') . ': ' . $Cost );
+$pdf->addText($Left_Margin + 350, $YPos-8, $FontSize, _('Request Date') . ': ' . $RequestDate );
+$BoxHeight = $Page_Height-200;
 
-$YPos -= $line_height;
+// Draws a rounded rectangle around line items:
+$pdf->RoundRectangle(
+	$Left_Margin,// RoundRectangle $XPos.
+	$Bottom_Margin+$BoxHeight+10,// RoundRectangle $YPos.
+	$Page_Width-$Right_Margin-$Left_Margin,// RoundRectangle $Width.
+	$BoxHeight+10,// RoundRectangle $Height.
+	10,// RoundRectangle $RadiusX.
+	10);// RoundRectangle $RadiusY.
+
+$YPos -= 35;
 /*Set up headings */
-$FontSize=12;
+$FontSize=10;
+$LineHeight = 14;
 
-$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,120,$FontSize,_('Narrative'), 'centre');
-$LeftOvers = $pdf->addTextWrap($Left_Margin+100,$YPos,150,$FontSize,_('Amount'), 'centre');
-$YPos-=$line_height;
+
+
+$TopOfColHeadings = $YPos;
+
+$pdf->addText($Left_Margin, $YPos, $FontSize, _('Item Code'));
+$pdf->addText($Left_Margin+80, $YPos, $FontSize, _('Description'));
+$pdf->addText($Left_Margin+350, $YPos, $FontSize, _('Qty Requested '));
+$pdf->addText($Left_Margin+420, $YPos, $FontSize, _('Qty Issued '));
+$pdf->addText($Left_Margin+490, $YPos, $FontSize, _('UOM'));
+
+
 $YPos -= 12;
 
 /*draw a line */
-$pdf->line($XPos, $YPos + 15,$Page_Width-$Right_Margin, $YPos + 15);
-$pdf->line($Left_Margin+35, $YPos + 42,$Page_Width-$Right_Margin, $YPos + 42);
-$FontSize=6;
-$YPos -= ($line_height-12);
+$pdf->line($XPos, $YPos-1,$Page_Width-$Right_Margin, $YPos-1);
 
+$YPos -= ($line_height);
 
 ?>

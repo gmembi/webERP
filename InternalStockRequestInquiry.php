@@ -1,4 +1,4 @@
-<?php
+Int<?php
 //Token 19 is used as the authority overwritten token to ensure that all internal request can be viewed.
 include('includes/session.php');
 $Title = _('Internal Stock Request Inquiry');
@@ -15,7 +15,7 @@ if (isset($_POST['ResetPart'])) {
 echo '<br/><div class="centre">';
 if (isset($_POST['RequestNo'])) {
 	$RequestNo = $_POST['RequestNo'];
-}
+}	
 if (isset($_POST['SearchPart'])) {
 	$StockItemsResult = GetSearchItems();
 }
@@ -63,36 +63,7 @@ if (!isset($StockID) AND !isset($_POST['Search'])) {//The scripts is just opened
 				}
 			}
 			echo '<select></td>';
-		} else {//there are possiblity that the user is the authorization person,lets figure things out
-
-			$sql = "SELECT stockrequest.loccode,locations.locationname FROM stockrequest INNER JOIN locations ON stockrequest.loccode=locations.loccode
-				INNER JOIN department ON stockrequest.departmentid=department.departmentid WHERE department.authoriser='" . $_SESSION['UserID'] . "'";
-			$authresult = DB_query($sql);
-			$LocationCounter = DB_num_rows($authresult);
-			if ($LocationCounter>0) {
-				$Authorizer = true;
-			
-				while ($myrow = DB_fetch_array($authresult)) {
-					$Locations[] = $myrow['loccode'];
-					if (isset($_POST['StockLocation'])) {
-						if ($_POST['StockLocation'] == 'All' AND $locallctr==0) {
-							echo '<option value="All" selected="selected">' . _('All') . '</option>';
-							$locallctr = 1;
-						} elseif ($myrow['loccode'] == $_POST['StockLocation']) {
-							echo '<option value="' . $myrow['loccode'] . '" selected="selected">' . $myrow['locationname'] . '</option>';
-						}
-					} else {
-						if ($LocationCounter>1 AND $locallctr == 0) {
-							$locallctr = 1;
-							echo '<option value="All">' . _('All') . '</option>';
-						}
-						echo '<option value="' . $myrow['loccode'] . '">' . $myrow['locationname'] .'</option>';
-					}
-				}
-				echo '</select></td>';
-			
-
-			} else {
+		}  else {
 				prnMsg(_('You have no authority to do the internal request inquiry'),'error');
 				include('includes/footer.php');
 				exit;
@@ -115,38 +86,37 @@ if (!isset($StockID) AND !isset($_POST['Search'])) {//The scripts is just opened
 		echo '</select></td></tr>';
 	}
 	//add the department, sometime we need to check each departments' internal request
-	if (!isset($_POST['Department'])) {
-		$_POST['Department'] = '';
+	if (!isset($_POST['Cost'])) {
+		$_POST['Cost'] = '';
 	}
 
-	echo '<td>' . _('Department') . '</td>
-		<td><select name="Department">';
+	echo '<td>' . _('Cost Centre') . '</td>
+		<td><select name="Cost">';
 	//now lets retrieve those deparment available for this user;
-	$sql = "SELECT departments.departmentid, 
-			departments.description
-			FROM departments LEFT JOIN stockrequest 
-				ON departments.departmentid = stockrequest.departmentid
-				AND (departments.authoriser = '" . $_SESSION['UserID'] . "' OR stockrequest.initiator = '" . $_SESSION['UserID'] . "') 
+	$sql = "SELECT locationcost.costid,
+	                locationcost.costname
+			FROM locationcost LEFT JOIN stockrequest 
+				ON locationcost.costid = stockrequest.lcost
 			WHERE stockrequest.dispatchid IS NOT NULL 
-			GROUP BY stockrequest.departmentid";//if a full request is need, the users must have all of those departments' authority 
+			GROUP BY stockrequest.lcost";//if a full request is need, the users must have all of those departments' authority 
 	$depresult = DB_query($sql);
 	if (DB_num_rows($depresult)>0) {
-		$Departments = array(); 
-		if (isset($_POST['Department']) AND $_POST['Department'] == 'All') {
+		$Costs = array(); 
+		if (isset($_POST['Cost']) AND $_POST['Cost'] == 'All') {
 			echo '<option selected="selected" value="All">' . _('All') . '</option>';
 		} else {
 			echo '<option value="All">' . _('All') . '</option>';
 		}
 		while ($myrow = DB_fetch_array($depresult)) {
-			$Departments[] = $myrow['departmentid'];
-			if (isset($_POST['Department']) AND ($_POST['Department'] == $myrow['departmentid'])) {
-				echo '<option selected="selected" value="' . $myrow['departmentid'] . '">' . $myrow['description'] . '</option>';
+			$Costs[] = $myrow['costid'];
+			if (isset($_POST['Cost']) AND ($_POST['Cost'] == $myrow['costid'])) {
+				echo '<option selected="selected" value="' . $myrow['costid'] . '">' . $myrow['costname'] . '</option>';
 			} else {
-				echo '<option value="' . $myrow['departmentid'] . '">' . $myrow['description'] . '</option>';
+				echo '<option value="' . $myrow['costid'] . '">' . $myrow['costname'] . '</option>';
 			}
 		}
 		echo '</select></td>';
-		echo '<input type="hidden" name="Departments" value="' . base64_encode(serialize($Departments)) . '" />';
+		echo '<input type="hidden" name="Costs" value="' . base64_encode(serialize($Costs)) . '" />';
 	} else {
 		prnMsg(_('There are no internal request result available for your or your department'),'error');
 		include('includes/footer.php');
@@ -252,7 +222,7 @@ if (!isset($StockID) AND !isset($_POST['Search'])) {//The scripts is just opened
 	}
 
 
-} 
+
 
 if(isset($StockItemsResult)){
 
@@ -300,8 +270,8 @@ if(isset($StockItemsResult)){
 	if (isset($_POST['ShowDetails']) OR isset($StockID)) {
 		$SQL = "SELECT stockrequest.dispatchid, 
 				stockrequest.loccode,
-				stockrequest.departmentid,
-				departments.description,
+				stockrequest.lcost,
+				locationcost.costname,
 				locations.locationname,
 				despatchdate,
 				authorised,
@@ -315,14 +285,14 @@ if(isset($StockItemsResult)){
 			uom,
 			completed
 			FROM stockrequest INNER JOIN stockrequestitems ON stockrequest.dispatchid=stockrequestitems.dispatchid 
-			INNER JOIN departments ON stockrequest.departmentid=departments.departmentid 
+			INNER JOIN locationcost ON stockrequest.lcost=locationcost.costid
 			INNER JOIN locations ON locations.loccode=stockrequest.loccode 
 			INNER JOIN stockmaster ON stockrequestitems.stockid=stockmaster.stockid";
 	} else {
 		$SQL = "SELECT stockrequest.dispatchid,
 					stockrequest.loccode,
-					stockrequest.departmentid,
-					departments.description,
+					stockrequest.lcost,
+				    locationcost.costname,
 					locations.locationname,
 					despatchdate,
 					authorised,
@@ -353,19 +323,19 @@ if(isset($StockItemsResult)){
 			$SQL .= " AND authorised = '" . $_POST['Authorized'] . "'";
 		}
 		//the department: if the department is all, no bothering for this since user has no relation ship with department; but consider the efficency, we should use the departments to filter those no needed out
-		if ($_POST['Department'] == 'All') {
+		if ($_POST['Cost'] == 'All') {
 			if (!in_array(19,$_SESSION['AllowedPageSecurityTokens'])) {
 
-				if (isset($_POST['Departments'])) {
-					$Departments = unserialize(base64_decode($_POST['Departments']));
-					$Departments = implode("','", $Departments);
-					$SQL .= " AND stockrequest.departmentid IN ('" . $Departments . "')";
+				if (isset($_POST['Cost'])) {
+					$Costs = unserialize(base64_decode($_POST['Cost']));
+					$Costs = implode("','", $Costs);
+					$SQL .= " AND stockrequest.lcost IN ('" . $Costs . "')";
 					
 				} //IF there are no departments set,so forgot it
 				
 			}
 		} else {
-			$SQL .= " AND stockrequest.departmentid='" . $_POST['Department'] . "'";
+			$SQL .= " AND stockrequest.lcost='" . $_POST['Cost'] . "'";
 		}
 		//Date from
 		if (isset($_POST['FromDate']) AND is_date($_POST['FromDate'])) {
@@ -391,7 +361,7 @@ if(isset($StockItemsResult)){
 					<tr>
 						<th>' . _('ID') . '</th>
 						<th>' . _('Locations') . '</th>
-						<th>' . _('Department') . '</th>
+						<th>' . _('Cost Centre') . '</th>
 						<th>' . _('Authorization') . '</th>
 						<th>' . _('Dispatch Date') . '</th>
 						<th>' . _('Stock ID') . '</th>
@@ -399,13 +369,14 @@ if(isset($StockItemsResult)){
 						<th>' . _('Quantity') . '</th>
 						<th>' . _('Units') . '</th>
 						<th>' . _('Completed') . '</th>
+						<th class="noprint">'. _('More Info'). '</th>
 					</tr>';
 		} else {
 			$Html .= '<table>
 					<tr>
 						<th>' . _('ID') . '</th>
 						<th>' . _('Locations') . '</th>
-						<th>' . _('Department') . '</th>
+						<th>' . _('Cost Centre') . '</th>
 						<th>' . _('Authorization') . '</th>
 						<th>' . _('Dispatch Date') . '</th>	
 					</tr>';
@@ -439,14 +410,20 @@ if(isset($StockItemsResult)){
 				$Html .= '<tr class="striped_row">
 						<td>' . $myrow['dispatchid'] . '</td>
 						<td>' . $myrow['locationname'] . '</td>
-						<td>' . $myrow['description'] . '</td>
+						<td>' . $myrow['costname'] . '</td>
 						<td>' . $Auth . '</td>
 						<td>' . $Disp . '</td>
 						<td>' . $myrow['stockid'] . '</td>
 						<td>' . $myrow['stkdescription'] . '</td>
 						<td>' . locale_number_format($myrow['quantity'],$myrow['decimalplaces']) . '</td>
 						<td>' . $myrow['uom'] . '</td>
-						<td>' . $Comp . '</td>';
+						<td>' . $Comp . '</td>
+						<td class="noprint">
+						<a href="'. $RootPath. '/PDFIssueSummary.php?IssueNo='. $myrow['dispatchid']. '&amp;InvOrCredit=Invoice&amp;PrintPDF=True" title="'. _('Click for PDF'). '">
+							<img alt="" src="'. $RootPath. '/css/'. $Theme. '/images/pdf.png" /> '.
+							_('PDF'). '
+						</a>
+					</td>';
 
 			} elseif (isset($ID) AND ($ID == $myrow['dispatchid'])) {
 				$Html .= '<tr class="striped_row">
@@ -464,7 +441,7 @@ if(isset($StockItemsResult)){
 					$Html .= '<tr class="striped_row">
 						<td>' . $myrow['dispatchid'] . '</td>
 						<td>' . $myrow['locationname'] . '</td>
-						<td>' . $myrow['description'] . '</td>
+						<td>' . $myrow['costname'] . '</td>
 						<td>' . $Auth . '</td>
 						<td>' . $Disp . '</td>';
 			}

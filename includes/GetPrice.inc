@@ -31,7 +31,7 @@ function GetPrice ($StockID, $DebtorNo, $BranchCode, $OrderLineQty=1, $ReportZer
 				AND prices.debtorno=debtorsmaster.debtorno
 				AND prices.branchcode='" . $BranchCode . "'
 				AND prices.startdate <='" . Date('Y-m-d') . "'
-				AND prices.enddate ='0000-00-00'
+				AND prices.enddate ='1000-01-01'
 				ORDER BY prices.startdate DESC";
 
 		$result = DB_query($sql,$ErrMsg);
@@ -65,7 +65,7 @@ function GetPrice ($StockID, $DebtorNo, $BranchCode, $OrderLineQty=1, $ReportZer
 						AND prices.debtorno=debtorsmaster.debtorno
 						AND prices.branchcode=''
 						AND prices.startdate <='" . Date('Y-m-d') . "'
-						AND prices.enddate >='0000-00-00'
+						AND prices.enddate >='1000-01-01'
 						ORDER BY prices.startdate DESC";
 
 				$result = DB_query($sql,$ErrMsg);
@@ -98,7 +98,7 @@ function GetPrice ($StockID, $DebtorNo, $BranchCode, $OrderLineQty=1, $ReportZer
 								AND prices.debtorno=''
 								AND prices.currabrev = debtorsmaster.currcode
 								AND prices.startdate <='" . Date('Y-m-d') . "'
-								AND prices.enddate ='0000-00-00'
+								AND prices.enddate ='1000-01-01'
 								ORDER BY prices.startdate DESC";
 
 						$result = DB_query($sql,$ErrMsg);
@@ -132,7 +132,7 @@ function GetPrice ($StockID, $DebtorNo, $BranchCode, $OrderLineQty=1, $ReportZer
 										AND prices.typeabbrev='" . $_SESSION['DefaultPriceList'] . "'
 										AND prices.debtorno=''
 										AND prices.startdate <='" . Date('Y-m-d') . "'
-										AND prices.enddate ='0000-00-00'
+										AND prices.enddate ='1000-01-01'
 										ORDER BY prices.startdate DESC";
 
 								$result = DB_query($sql,$ErrMsg);

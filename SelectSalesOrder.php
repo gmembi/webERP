@@ -731,8 +731,7 @@ if (isset($StockItemsResult)
 					salesorders.deliverto,
 					salesorders.printedpackingslip,
 					salesorders.poplaced,
-					SUM(salesorderdetails.unitprice*(salesorderdetails.quantity-salesorderdetails.qtyinvoiced)*(1-salesorderdetails.discountpercent)/currencies.rate) AS ordervalue,
-					pickreq.prid
+					SUM(salesorderdetails.unitprice*(salesorderdetails.quantity-salesorderdetails.qtyinvoiced)*(1-salesorderdetails.discountpercent)/currencies.rate) AS ordervalue
 				FROM salesorders
 				INNER JOIN salesorderdetails
 					ON salesorders.orderno = salesorderdetails.orderno
@@ -743,9 +742,6 @@ if (isset($StockItemsResult)
 					AND salesorders.branchcode = custbranch.branchcode
 				INNER JOIN currencies
 					ON debtorsmaster.currcode = currencies.currabrev
-				LEFT OUTER JOIN pickreq
-					ON pickreq.orderno=salesorders.orderno
-					AND pickreq.closed=0
 				WHERE salesorderdetails.completed=0 ";
 			$SQL .= $OrderDateFrom . $OrderDateTo;
 		} else {

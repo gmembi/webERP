@@ -59,16 +59,16 @@ to limit possibility for SQL injection attacks and cross scripting attacks
 if (isset($_SESSION['DatabaseName'])){
 	foreach ($_POST as $PostVariableName => $PostVariableValue) {
 		if (gettype($PostVariableValue) != 'array') {
-			if(get_magic_quotes_gpc()) {
-				$_POST['name'] = stripslashes($_POST['name']);
-			}
+			// if(get_magic_quotes_gpc()) {
+			// 	$_POST['name'] = stripslashes($_POST['name']);
+			// }
 
 			$_POST[$PostVariableName] = DB_escape_string(htmlspecialchars($PostVariableValue,ENT_QUOTES,'UTF-8'));
 		} else {
 			foreach ($PostVariableValue as $PostArrayKey => $PostArrayValue) {
-				if(get_magic_quotes_gpc()) {
-					$PostVariableValue[$PostArrayKey] = stripslashes($value[$PostArrayKey]);
-				}
+				// if(get_magic_quotes_gpc()) {
+				// 	$PostVariableValue[$PostArrayKey] = stripslashes($value[$PostArrayKey]);
+				// }
 			 	$_POST[$PostVariableName][$PostArrayKey] = DB_escape_string(htmlspecialchars($PostArrayValue,ENT_QUOTES,'UTF-8'));
 
 			}

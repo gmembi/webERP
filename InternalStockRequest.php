@@ -17,16 +17,12 @@ if (isset($_GET['New'])) {
 
 if (isset($_POST['Update'])) {
 	$InputError=0;
-	if ($_POST['Department']=='') {
-		prnMsg( _('You must select a Department for the request'), 'error');
-		$InputError=1;
-	}
+	
 	if ($_POST['Location']=='') {
 		prnMsg( _('You must select a Location to request the items from'), 'error');
 		$InputError=1;
 	}
 	if ($InputError==0) {
-		$_SESSION['Request']->Department=$_POST['Department'];
 		$_SESSION['Request']->Location=$_POST['Location'];
 		$_SESSION['Request']->DispatchDate=$_POST['DispatchDate'];
 		$_SESSION['Request']->Narrative=$_POST['Narrative'];
@@ -50,7 +46,7 @@ if (isset($_GET['Delete'])) {
 foreach ($_POST as $key => $value) {
 	if (mb_strstr($key,'StockID')) {
 		$Index=mb_substr($key, 7);
-		if (filter_number_format($_POST['Quantity'.$Index])>0) {
+		if (filter_number_format($_POST['Quantity'.$Index])>0 AND filter_number_format($_POST['OnHand'.$Index])!=0 AND (filter_number_format($_POST['Quantity'.$Index])<=filter_number_format($_POST['OnHand'.$Index]))) {
 			$StockID=$value;
 			$ItemDescription=$_POST['ItemDescription'.$Index];
 			$DecimalPlaces=$_POST['DecimalPlaces'.$Index];
@@ -58,6 +54,7 @@ foreach ($_POST as $key => $value) {
 			$_POST['Units'.$StockID]=$_POST['Units'.$Index];
 			$_SESSION['Request']->AddLine($StockID, $ItemDescription, $NewItem_array[$StockID], $_POST['Units'.$StockID], $DecimalPlaces);
 		}
+		
 	}
 }
 
@@ -65,16 +62,16 @@ if (isset($_POST['Submit']) AND (!empty($_SESSION['Request']->LineItems))) {
 
 	DB_Txn_Begin();
 	$InputError=0;
-	if ($_SESSION['Request']->Department=='') {
-		prnMsg( _('You must select a Department for the request'), 'error');
-		$InputError=1;
-	}
+
 	if ($_SESSION['Request']->Location=='') {
 		prnMsg( _('You must select a Location to request the items from'), 'error');
 		$InputError=1;
 	}
 	if ($InputError==0) {
 		$RequestNo = GetNextTransNo(38);
+		$NameSQL="SELECT realname FROM www_users WHERE userid='".$_SESSION['UserID']."'";
+		$NameResult=DB_query($NameSQL);
+		$NameRow=DB_fetch_array($NameResult);
 		$HeaderSQL="INSERT INTO stockrequest (dispatchid,
 											loccode,
 											departmentid,
@@ -87,13 +84,13 @@ if (isset($_POST['Submit']) AND (!empty($_SESSION['Request']->LineItems))) {
 										VALUES(
 											'" . $RequestNo . "',
 											'" . $_SESSION['Request']->Location . "',
-											'" . $_SESSION['Request']->Department . "',
+											1,
 											'" . FormatDateForSQL($_SESSION['Request']->DispatchDate) . "',
 											'" . $_SESSION['Request']->Narrative . "',
 											'" . $_SESSION['Request']->LGroup. "',
 											'" . $_SESSION['Request']->LSection. "',
 											'" . $_SESSION['Request']->LCost. "',
-											'" . $_SESSION['UserID'] . "')";
+											'" . $NameRow['realname'] . "')";
 		$ErrMsg =_('CRITICAL ERROR') . '! ' . _('NOTE DOWN THIS ERROR AND SEEK ASSISTANCE') . ': ' . _('The request header record could not be inserted because');
 		$DbgMsg = _('The following SQL to insert the request header record was used');
 		$Result = DB_query($HeaderSQL,$ErrMsg,$DbgMsg,true);
@@ -288,55 +285,38 @@ if (DB_num_rows($result)==0){
 }
 	//End select location
 
-	echo '<tr><td>' . _('Select Source') . ':</td>
-	<td><select name="source">';
+	
+// echo '
 
-	$SQL = "SELECT sourceref,
-				sourcedescription
-		FROM source
-		ORDER BY sourceref";
-
-	$result=DB_query($SQL,$db);
-	echo '<option value=""></option>';
-	while ($myrow=DB_fetch_array($result)){
-		if (isset($_POST['source']) AND $_POST['source']==$myrow['sourceref']){
-			echo '<option selected="True" value="' . $myrow['sourceref'] . '">' . $myrow['sourceref'].' - ' .$myrow['sourcedescription'] . '</option>';
-		} else {
-			echo '<option value="' . $myrow['sourceref'] . '">' . $myrow['sourceref'].' - ' .$myrow['sourcedescription'] . '</option>';
-		}
-	}
-	echo '</select></td></tr>';
-echo '
-</tr>
-	<tr>
-		<td>' . _('Department') . ':</td>';
-if($_SESSION['AllowedDepartment'] == 0){
-	// any internal department allowed
-	$sql="SELECT departmentid,
-				description
-			FROM departments
-			ORDER BY description";
-}
-else{
-	// just 1 internal department allowed
-	$sql="SELECT departmentid,
-				description
-			FROM departments
-			WHERE departmentid = '". $_SESSION['AllowedDepartment'] ."'
-			ORDER BY description";
-}
-$result=DB_query($sql);
-echo '<td><select name="Department">';
-while ($MyRow=DB_fetch_array($result)){
-	if (isset($_SESSION['Request']->Department) AND $_SESSION['Request']->Department==$MyRow['departmentid']){
-		echo '<option selected value="', $MyRow['departmentid'], '">', htmlspecialchars($MyRow['description'], ENT_QUOTES,'UTF-8'), '</option>';
-	} else {
-		echo '<option value="', $MyRow['departmentid'], '">', htmlspecialchars($MyRow['description'], ENT_QUOTES,'UTF-8'), '</option>';
-	}
-}
-echo '</select></td>
-	</tr>
-	<tr>
+// 	<tr>
+// 		<td>' . _('Department') . ':</td>';
+// if($_SESSION['AllowedDepartment'] == 0){
+// 	// any internal department allowed
+// 	$sql="SELECT departmentid,
+// 				description
+// 			FROM departments
+// 			ORDER BY description";
+// }
+// else{
+// 	// just 1 internal department allowed
+// 	$sql="SELECT departmentid,
+// 				description
+// 			FROM departments
+// 			WHERE departmentid = '". $_SESSION['AllowedDepartment'] ."'
+// 			ORDER BY description";
+// }
+// $result=DB_query($sql);
+// echo '<td><select name="Department">';
+// while ($MyRow=DB_fetch_array($result)){
+// 	if (isset($_SESSION['Request']->Department) AND $_SESSION['Request']->Department==$MyRow['departmentid']){
+// 		echo '<option selected value="', $MyRow['departmentid'], '">', htmlspecialchars($MyRow['description'], ENT_QUOTES,'UTF-8'), '</option>';
+// 	} else {
+// 		echo '<option value="', $MyRow['departmentid'], '">', htmlspecialchars($MyRow['description'], ENT_QUOTES,'UTF-8'), '</option>';
+// 	}
+// }
+// echo '</select></td>
+// 	</tr>
+	echo '	<tr>
 		<td>' . _('Location from which to request stock') . ':</td>';
 $sql="SELECT locations.loccode,
 			locationname
@@ -399,6 +379,7 @@ echo '<form action="', htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8
 
 if (isset($_SESSION['Request']->LineItems)) {
 	foreach ($_SESSION['Request']->LineItems as $LineItems) {
+		
 		echo '<tr class="striped_row">
 				<td>', $LineItems->LineNumber, '</td>
 				<td>', $LineItems->StockID, '</td>
@@ -408,7 +389,8 @@ if (isset($_SESSION['Request']->LineItems)) {
 				<td><a href="', htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'), '?Edit=', urlencode($LineItems->LineNumber), '">', _('Edit'), '</a></td>
 				<td><a href="', htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8'), '?Delete=', urlencode($LineItems->LineNumber), '">', _('Delete'), '</a></td>
 			</tr>';
-	}
+	
+}
 }
 
 echo '</tbody>
@@ -739,6 +721,7 @@ if (isset($SearchResult)) {
 			</tr>
 			<input type="hidden" name="DecimalPlaces', $i, '" value="', $MyRow['decimalplaces'], '" />
 			<input type="hidden" name="ItemDescription', $i, '" value="', $MyRow['description'], '" />
+			<input type="hidden" name="OnHand', $i, '" value="', locale_number_format($QOH,$DecimalPlaces), '" />
 			<input type="hidden" name="Units', $i, '" value="', $MyRow['stockunits'],  '" />';
 		$i++;
 	}

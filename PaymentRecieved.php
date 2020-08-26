@@ -14,18 +14,16 @@ echo '<p class="page_title_text"><img src="'.$RootPath.'/css/'.$Theme.'/images/i
 
 if (isset($_POST['UpdateAll'])) {
 	foreach ($_POST as $key => $value) {
-		if (mb_strpos($key,'Completed')) {
-			$RequestID = mb_substr($key,0, mb_strpos($key,'Completed'));
-			$LineID = mb_substr($key,mb_strpos($key,'Completed')+9);
+		if (mb_strpos($key,'Qty')) {
+			$RequestID = mb_substr($key,0, mb_strpos($key,'Qty'));
+			$LineID = mb_substr($key,mb_strpos($key,'Qty')+3);
 			$Quantity = filter_number_format($_POST[$RequestID.'Qty'.$LineID]);
 			$StockID = $_POST[$RequestID.'StockID'.$LineID];
 			$Location = $_POST[$RequestID.'Location'.$LineID];
 			$Department = $_POST[$RequestID.'Department'.$LineID];
 			$LGroup = $_POST[$RequestID.'LGroup'.$LineID];
-			$Narrative = $_POST[$RequestID.'Narrative'.$LineID];
 			$LSection = $_POST[$RequestID.'LSection'.$LineID];
 			$LCost = $_POST[$RequestID.'LCost'.$LineID];
-			$Costname = $_POST[$RequestID.'Costname'.$LineID];
 			$Source = $_POST[$RequestID.'Source'.$LineID];
 			$RequestedQuantity = filter_number_format($_POST[$RequestID.'RequestedQuantity'.$LineID]);
 			$Controlled = $_POST[$RequestID.'Controlled'.$LineID];
@@ -42,9 +40,9 @@ if (isset($_POST['UpdateAll'])) {
 			$StandardCost=$myrow['materialcost']+$myrow['labourcost']+$myrow['overheadcost'];
 			$DecimalPlaces = $myrow['decimalplaces'];
 
-			$StockmoveNarrative = _('Issue') . ' ' . $Quantity . ' ' . _('of') . ' '. $StockID . ' ' . _('to department') . ' ' . $Costname . ' ' . _('from') . ' ' . $Location . ' ' . _('for use of') . ' ' . $Narrative;
+			$Narrative = _('Issue') . ' ' . $Quantity . ' ' . _('of') . ' '. $StockID . ' ' . _('to department') . ' ' . $Department . ' ' . _('from') . ' ' . $Location ;
 
-			$AdjustmentNumber = GetNextTransNo(14);
+			$AdjustmentNumber = GetNextTransNo(38);
 			$PeriodNo = GetPeriod (Date($_SESSION['DefaultDateFormat']));
 			$SQLAdjustmentDate = FormatDateForSQL(Date($_SESSION['DefaultDateFormat']));
 
@@ -63,8 +61,8 @@ if (isset($_POST['UpdateAll'])) {
 				// There must actually be some error this should never happen
 				$QtyOnHandPrior = 0;
 			}
-            
-			if ($_SESSION['ProhibitNegativeStock']==0 OR ($_SESSION['ProhibitNegativeStock']==1 AND $QtyOnHandPrior >= $Quantity AND $Completed=True)) {
+
+			if ($_SESSION['ProhibitNegativeStock']==0 OR ($_SESSION['ProhibitNegativeStock']==1 AND $QtyOnHandPrior >= $Quantity)) {
 
 				$SQL = "INSERT INTO stockmoves (
 									stockid,
@@ -72,7 +70,6 @@ if (isset($_POST['UpdateAll'])) {
 									transno,
 									loccode,
 									trandate,
-									price,
 									userid,
 									prd,
 									reference,
@@ -84,10 +81,9 @@ if (isset($_POST['UpdateAll'])) {
 									'" . $AdjustmentNumber . "',
 									'" . $Location . "',
 									'" . $SQLAdjustmentDate . "',
-									'" . $StandardCost . "',
 									'" . $_SESSION['UserID'] . "',
 									'" . $PeriodNo . "',
-									'" . $StockmoveNarrative ."',
+									'" . $Narrative ."',
 									'" . -$Quantity . "',
 									'" . ($QtyOnHandPrior - $Quantity) . "'
 								)";
@@ -149,8 +145,6 @@ if (isset($_POST['UpdateAll'])) {
 
 				$Result = DB_query($SQL, $ErrMsg, $DbgMsg, true);
 
-
-
 				if ($_SESSION['CompanyRecord']['gllink_stock']==1 AND $StandardCost > 0){
 
 					$StockGLCodes = GetStockGLCode($StockID);
@@ -172,7 +166,7 @@ if (isset($_POST['UpdateAll'])) {
 												'" . $PeriodNo . "',
 												'" . $StockGLCodes['issueglact'] . "',
 												'" . $StandardCost * ($Quantity) . "',
-												'" . $StockmoveNarrative . "',
+												'" . $Narrative . "',
 												'" . $LGroup . "',
 												'" . $LSection . "',
 												'" . $LCost . "',
@@ -200,7 +194,7 @@ if (isset($_POST['UpdateAll'])) {
 												'" . $PeriodNo . "',
 												'" . $StockGLCodes['stockact'] . "',
 												'" . $StandardCost * -$Quantity . "',
-												'" . $StockmoveNarrative . "',
+												'" . $Narrative . "',
 												'" . $LGroup . "',
 												'" . $LSection . "',
 												'" . $LCost . "',
@@ -215,14 +209,6 @@ if (isset($_POST['UpdateAll'])) {
 				if (($Quantity >= $RequestedQuantity) OR $Completed==True) {
 					$SQL="UPDATE stockrequestitems
 								SET completed=1
-							WHERE dispatchid='".$RequestID."'
-								AND dispatchitemsid='".$LineID."'";
-					$Result = DB_query($SQL, $ErrMsg, $DbgMsg,true);
-				}
-
-				if (($Quantity < $RequestedQuantity) AND $Completed==True) {
-					$SQL="UPDATE stockrequestitems
-								SET pending=1, qtyremain= $RequestedQuantity - $Quantity
 							WHERE dispatchid='".$RequestID."'
 								AND dispatchitemsid='".$LineID."'";
 					$Result = DB_query($SQL, $ErrMsg, $DbgMsg,true);
@@ -273,46 +259,9 @@ if (isset($_POST['UpdateAll'])) {
 	}
 }
 
-if (!isset($_POST['Location'])) {
-	echo '<form method="post" action="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '">';
-    echo '<div>';
-	echo '<input type="hidden" name="FormID" value="' . $_SESSION['FormID'] . '" />';
-	echo '<table class="selection">
-			<tr>
-				<td>' . _('Choose a location to issue requests from') . '</td>
-				<td><select name="Location">';
-	$sql = "SELECT locations.loccode, locationname
-			FROM locations
-			INNER JOIN locationusers ON locationusers.loccode=locations.loccode AND locationusers.userid='" .  $_SESSION['UserID'] . "' AND locationusers.canupd=1
-			WHERE internalrequest = 1
-			ORDER BY locationname";
-	$resultStkLocs = DB_query($sql);
-	while ($myrow=DB_fetch_array($resultStkLocs)){
-		if (isset($_SESSION['Adjustment']->StockLocation)){
-			if ($myrow['loccode'] == $_SESSION['Adjustment']->StockLocation){
-				echo '<option selected="selected" value="' . $myrow['loccode'] . '">' . $myrow['locationname'] . '</option>';
-			} else {
-				echo '<option value="' . $myrow['loccode'] . '">' . $myrow['locationname'] . '</option>';
-			}
-		} elseif ($myrow['loccode']==$_SESSION['UserStockLocation']){
-			echo '<option selected="selected" value="' . $myrow['loccode'] . '">' . $myrow['locationname'] . '</option>';
-			$_POST['StockLocation']=$myrow['loccode'];
-		} else {
-		 echo '<option value="' . $myrow['loccode'] . '">' . $myrow['locationname'] . '</option>';
-		}
-	}
-	echo '</select></td></tr>';
-	echo '</table><br />';
-	echo '<div class="centre"><input type="submit" name="EnterAdjustment" value="'. _('Show Requests'). '" /></div>';
-    echo '</div>
-          </form>';
-	include('includes/footer.php');
-	exit;
-}
-
 /* Retrieve the requisition header information
  */
-if (isset($_POST['Location'])) {
+if (isset($_GET['PRNumber'])) {
 	$sql="SELECT stockrequest.dispatchid,
 			locations.locationname,
 			stockrequest.despatchdate,
@@ -320,7 +269,6 @@ if (isset($_POST['Location'])) {
 			stockrequest.lgroup,
 			stockrequest.lsection,
 			stockrequest.lcost,
-			stockrequest.narrative,
 			departments.description,
 			locationgroup.groupname,
 			locationsection.sectionname,
@@ -399,8 +347,7 @@ if (isset($_POST['Location'])) {
 				<td colspan="5" align="left">
 					<table class="selection" align="left">
 					<tr>
-					    <th>' . _('Stock Code') . '</th>
-					    <th>' . _('Product') . '</th>
+						<th>' . _('Product') . '</th>
 						<th>' . _('Quantity') . '<br />' . _('Required') . '</th>
 						<th>' . _('Quantity') . '<br />' . _('Delivered') . '</th>
 						<th>' . _('Units') . '</th>
@@ -411,7 +358,6 @@ if (isset($_POST['Location'])) {
 
 		while ($LineRow=DB_fetch_array($LineResult)) {
 			echo '<tr>
-			        <td>' . $LineRow['stockid'] . '</td>
 					<td>' . $LineRow['description'] . '</td>
 					<td class="number">' . locale_number_format($LineRow['quantity']-$LineRow['qtydelivered'],$LineRow['decimalplaces']) . '</td>
 					<td class="number"><input type="text" class="number" name="'. $LineRow['dispatchid'] . 'Qty' . $LineRow['dispatchitemsid'] . '" value="'.locale_number_format($LineRow['quantity']-$LineRow['qtydelivered'],$LineRow['decimalplaces']).'" size="11" maxlength="10" /></td>
@@ -447,8 +393,6 @@ if (isset($_POST['Location'])) {
 			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'Department'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['description'].'" />';
 			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'Controlled'. $LineRow['dispatchitemsid'] . '" value="'.$LineRow['controlled'].'" />';
 			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'LGroup'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['lgroup'].'" />';
-			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'Costname'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['costname'].'" />';
-			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'Narrative'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['narrative'].'" />';
 			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'LSection'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['lsection'].'" />';
 			echo '<input type="hidden" class="number" name="'. $LineRow['dispatchid'] . 'LCost'. $LineRow['dispatchitemsid'] . '" value="'.$myrow['lcost'].'" />';
 		} // end while order line detail

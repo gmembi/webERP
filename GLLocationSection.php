@@ -134,7 +134,6 @@ if (isset($_POST['submit'])) {
 
 		$sql = "UPDATE locationsection SET sectionid='" . $_POST['SectionID'] . "',
 										sectionname='" . $_POST['SectionName'] . "',
-										
 										locgroupname='" . $_POST['GroupName'] . "'
 									WHERE sectionid = '" . $_POST['SelectedLocationSection'] . "'";
 		$ErrMsg = _('An error occurred in updating the account group');
@@ -151,7 +150,6 @@ if (isset($_POST['submit'])) {
 										) VALUES (
 											'" . $_POST['SectionID'] . "',
 											'" . $_POST['SectionName'] . "',
-											
 											'" . $_POST['GroupName'] . "')";
 		$ErrMsg = _('An error occurred in inserting the account group');
 		$DbgMsg = _('The SQL that was used to insert the account group was');
@@ -203,14 +201,14 @@ or deletion of the records*/
 
 	$sql = "SELECT sectionid,
 					sectionname,
-					sectionname
+					locgroupname
 			FROM locationsection
-			LEFT JOIN locationsection ON sectionid = locgroupname
+			LEFT JOIN locationgroup ON groupid = locgroupname
 			ORDER BY sectionid";
 
 	$DbgMsg = _('The sql that was used to retrieve the account group information was ');
 	$ErrMsg = _('Could not get account groups because');
-    $result = DB_query($sql,$db,$ErrMsg,$DbgMsg);
+    $result = DB_query($sql, $db,$ErrMsg,$DbgMsg);
     
     echo '<p class="page_title_text"><img alt="" class="noprint" src="', $RootPath, '/css/', $Theme,
     '/images/maintenance.png" title="', // Icon image.
@@ -247,11 +245,11 @@ or deletion of the records*/
 //			break;
 //		} //end of switch statement
 
-		echo '<td>' . $myrow['SectionID'] . '</td>
-			<td>' . htmlentities($myrow['SectionName'], ENT_QUOTES,'UTF-8') . '</td>
-			<td>' . $myrow['groupname'] . '</td>';
-		echo '<td><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?Selectedlocationsection=' . htmlentities($myrow['SectionID'], ENT_QUOTES,'UTF-8') . '">' . _('Edit') . '</a></td>';
-		echo '<td><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?Selectedlocationsection=' . htmlentities($myrow['SectionID'], ENT_QUOTES,'UTF-8') . '&amp;delete=1" onclick="return confirm(\'' . _('Are you sure you wish to delete this account group?') . '\');">' . _('Delete') .'</a></td></tr>';
+		echo '<td>' . $myrow['sectionid'] . '</td>
+			<td>' . htmlentities($myrow['sectionname'], ENT_QUOTES,'UTF-8') . '</td>
+			<td>' . $myrow['locgroupname'] . '</td>';
+		echo '<td><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?SelectedLocationSection=' . htmlentities($myrow['sectionid'], ENT_QUOTES,'UTF-8') . '">' . _('Edit') . '</a></td>';
+		echo '<td><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '?SelectedLocationSection=' . htmlentities($myrow['sectionid'], ENT_QUOTES,'UTF-8') . '&amp;delete=1" onclick="return confirm(\'' . _('Are you sure you wish to delete this account group?') . '\');">' . _('Delete') .'</a></td></tr>';
 
 	} //END WHILE LIST LOOP
 	echo '</table>';
@@ -260,7 +258,7 @@ or deletion of the records*/
 
 if (!isset($_GET['delete'])) {
 
-	echo '<form method="post" id="locationsection" action="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '">';
+	echo '<form method="post" id="LocationSection" action="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') . '">';
 	echo '<input type="hidden" name="FormID" value="' . $_SESSION['FormID'] . '" />';
 
 	if (isset($_GET['SelectedLocationSection'])) {
@@ -282,17 +280,17 @@ if (!isset($_GET['delete'])) {
 		}
 		$myrow = DB_fetch_array($result);
 
-		$_POST['SectionID'] = $myrow['SectionID'];
-		$_POST['SectionName']  = $myrow['SectionName'];
+		$_POST['SectionID'] = $myrow['sectionid'];
+		$_POST['SectionName']  = $myrow['sectionname'];
 		$_POST['GroupName'] = $myrow['locgroupname'];
 
 		echo '<table class="selection">';
 		echo '<tr>
 				<th colspan="2" class="header">' . _('Edit Location Section Details') . '</th>
 			</tr>';
-		echo '<input type="hidden" name="Selectedlocationsection" value="' . $_GET['SelectedLocationSection'] . '" />';
-		echo '<input type="hidden" name="sectionid" value="' . $_POST['SectionID'] . '" />';
-                 echo '<input type="hidden" name="groupname" value="' . $_POST['GroupName'] . '" />';
+		echo '<input type="hidden" name="SelectedLocationSection" value="' . $_GET['SelectedLocationSection'] . '" />';
+		echo '<input type="hidden" name="SectionID" value="' . $_POST['SectionID'] . '" />';
+                 echo '<input type="hidden" name="GroupName" value="' . $_POST['GroupName'] . '" />';
 
 		echo '<tr>
 				<td>' . _('Location ID') . ':' . '</td>
@@ -316,17 +314,17 @@ if (!isset($_GET['delete'])) {
 		
 
 		echo '<br /><table class="selection">';
-		echo '<input  type="hidden" name="Selectedlocationsection" value="' . $_POST['SelectedLocationSection'] . '" />';
+		echo '<input  type="hidden" name="SelectedLocationSection" value="' . $_POST['SelectedLocationSection'] . '" />';
 		echo '<tr>
 				<th colspan="2" class="header">' . _('New Location Section Details') . '</th>
 			</tr>';
 		echo '<tr>
 				<td>' . _('Location Section ID') . ':' . '</td>
-				<td><input tabindex="1" ' . (in_array('SectionID',$Errors) ?  'class="inputerror"' : '' ) .' type="text" name="sectionid" size="50" maxlength="50" value="' . $_POST['SectionID'] . '" /></td>
+				<td><input tabindex="1" ' . (in_array('SectionID',$Errors) ?  'class="inputerror"' : '' ) .' type="text" name="SectionID" size="50" maxlength="50" value="' . $_POST['SectionID'] . '" /></td>
 			</tr>';
                 echo '<tr>
 				<td>' . _('Location Section Name') . ':' . '</td>
-				<td><input tabindex="1" ' . (in_array('SectionName',$Errors) ?  'class="inputerror"' : '' ) .' type="text" name="sectionname" size="50" maxlength="50" value="' . $_POST['SectionName'] . '" /></td>
+				<td><input tabindex="1" ' . (in_array('SectionName',$Errors) ?  'class="inputerror"' : '' ) .' type="text" name="SectionName" size="50" maxlength="50" value="' . $_POST['SectionName'] . '" /></td>
 			</tr>';
 	}
 	
@@ -338,7 +336,7 @@ if (!isset($_GET['delete'])) {
 	$sql = "SELECT groupid, groupname FROM locationgroup ORDER BY groupid";
 	$grpresult = DB_query($sql, $db,$ErrMsg,$DbgMsg);
 	while( $grprow = DB_fetch_array($grpresult) ) {
-		if ($_POST['SectionName']==$grprow['groupid']) {
+		if ($_POST['GroupName']==$grprow['groupid']) {
 			echo '<option selected="selected" value="'.$grprow['groupid'].'">'.$grprow['groupname'].' ('.$grprow['groupid'].')</option>';
 		} else {
 			echo '<option value="'.$grprow['groupid'].'">'.$grprow['groupname'].' ('.$grprow['groupid'].')</option>';

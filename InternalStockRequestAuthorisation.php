@@ -10,20 +10,27 @@ $BookMark = 'AuthoriseRequest';
 include('includes/header.php');
 
 echo '<p class="page_title_text"><img src="'.$RootPath.'/css/'.$Theme.'/images/transactions.png" title="' . $Title . '" alt="" />' . ' ' . $Title . '</p>';
+$NameSQL="SELECT realname FROM www_users WHERE userid='".$_SESSION['UserID']."'";
+$NameResult=DB_query($NameSQL);
+$NameRow=DB_fetch_array($NameResult);
 
 if (isset($_POST['UpdateAll'])) {
 	foreach ($_POST as $POSTVariableName => $POSTValue) {
 		if (mb_substr($POSTVariableName,0,6)=='status') {
 			$RequestNo=mb_substr($POSTVariableName,6);
 			$sql="UPDATE stockrequest
-					SET authorised='1', authorised_by= '" . $_SESSION['UserID'] . "'
+					SET authorised='1', authorised_by= '" . $NameRow['realname'] . "'
 					WHERE dispatchid='" . $RequestNo . "'";
 			$result=DB_query($sql);
+		
 		}
+		
 		if (strpos($POSTVariableName, 'cancel')) {
- 			$CancelItems = explode('cancel', $POSTVariableName);
+			$CancelItems = explode('cancel', $POSTVariableName);
+			$Reason = $_POST[$CancelItems[0].'Reason'.$CancelItems[1]];
  			$sql = "UPDATE stockrequestitems
- 						SET completed=1
+ 						SET completed=1,
+						 cancel_reason = '". $Reason ."'
  						WHERE dispatchid='" . $CancelItems[0] . "'
  						AND dispatchitemsid='" . $CancelItems[1] . "'";
  			$result = DB_query($sql);
@@ -101,19 +108,23 @@ while ($myrow=DB_fetch_array($result)) {
 			<td colspan="5" align="left">
 				<table class="selection" align="left">
 				<tr>
-					<th>' . _('Product') . '</th>
-					<th>' . _('Quantity') . '<br />' . _('Required') . '</th>
-						<th>' . _('Quantity') . '<br />' . _('on Hand') . '</th>
+				<th>' . _('Stock Code') . '</th>	
+				<th>' . _('Product') . '</th>
+					<th>' . _('Quantity') . '<br />' . _('on Hand') . '</th>
+					<th>' . _('Quantity') . '<br />' . _('Required') . '</th>	
 					<th>' . _('Units') . '</th>
+					<th>' . _('Cancel Reason') . '</th>
 					<th>' . _('Cancel Line') . '</th>
 				</tr>';
 
 	while ($LineRow=DB_fetch_array($LineResult)) {
 		echo '<tr>
+		<td>' . $LineRow['stockid'] . '</td>
 				<td>' . $LineRow['description'] . '</td>
-				<td class="number">' . locale_number_format($LineRow['quantity'],$LineRow['decimalplaces']) . '</td>
 				<td class="number">' . locale_number_format($LineRow['qoh'],$LineRow['decimalplaces']) . '</td>
+				<td class="number">' . locale_number_format($LineRow['quantity'],$LineRow['decimalplaces']) . '</td>
 				<td>' . $LineRow['uom'] . '</td>
+				<td><input type="text" name="' . $myrow['dispatchid'] . 'Reason' . $LineRow['dispatchitemsid'] . '" /></td>
 				<td><input type="checkbox" name="' . $myrow['dispatchid'] . 'cancel' . $LineRow['dispatchitemsid'] . '" /></td
 			</tr>';
 	} // end while order line detail

@@ -613,6 +613,12 @@ if (isset($_POST['submit'])) {
 						$result = DB_query($SQL, $ErrMsg, $DbgMsg,true);
 					}
 				} /* end if the stock category changed and forced a change in WIP account */
+
+				$sql = "UPDATE locstock SET  categoryid =  '" . $_POST['CategoryID'] . "' WHERE stockid='".$StockID."'";
+
+					$ErrMsg =  _('The locations for the item') . ' ' . $StockID .  ' ' . _('could not be added because');
+					$DbgMsg = _('NB Locations records can be added by opening the utility page') . ' <i>Z_MakeStockLocns.php</i> ' . _('The SQL that was used to add the location records that failed was');
+					$UpdResult = DB_query($sql,$ErrMsg,$DbgMsg,true);
 				DB_Txn_Commit();
 				prnMsg( _('Stock Item') . ' ' . $StockID . ' ' . _('has been updated'), 'success');
 				echo '<br />';
@@ -725,9 +731,9 @@ if (isset($_POST['submit'])) {
 					//Add data to locstock
 
 					$sql = "INSERT INTO locstock (loccode,
-													stockid)
+													stockid, categoryid)
 										SELECT locations.loccode,
-										'" . $StockID . "'
+										'" . $StockID . "', '" . $_POST['CategoryID'] . "'
 										FROM locations";
 
 					$ErrMsg =  _('The locations for the item') . ' ' . $StockID .  ' ' . _('could not be added because');

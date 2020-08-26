@@ -571,7 +571,7 @@ else {
 						AND orddate<='" . $DateTo . "'
 						" . $WhereStockLocation .
 						  $StatusCriteria . "
-						GROUP BY purchorders.orderno ASC,
+						GROUP BY purchorders.orderno,
 							purchorders.realorderno,
 							suppliers.suppname,
 							purchorders.orddate,

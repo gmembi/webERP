@@ -104,17 +104,17 @@ $SQL = "SELECT stockmoves.stockid,
 				stockmaster.serialised
 		FROM stockmoves
 		INNER JOIN systypes
-			ON stockmoves.type=systypes.typeid
+			ON stockmoves.type = systypes.typeid
 		INNER JOIN stockmaster
-			ON stockmoves.stockid=stockmaster.stockid
+			ON stockmoves.stockid = stockmaster.stockid
 		INNER JOIN custbranch
-			ON stockmoves.debtorno=custbranch.debtorno
+			ON stockmoves.debtorno = custbranch.debtorno
 			AND stockmoves.branchcode = custbranch.branchcode
-		WHERE  stockmoves.loccode='" . $_POST['StockLocation'] . "'
+		WHERE  stockmoves.loccode = '" . $_POST['StockLocation'] . "'
 			AND stockmoves.trandate >= '" . $SQLAfterDate . "'
 			AND stockmoves.stockid = '" . $StockID . "'
 			AND stockmoves.trandate <= '" . $SQLBeforeDate . "'
-			AND hidemovt=0
+			AND hidemovt = 0
 		ORDER BY stkmoveno DESC";
 
 $ErrMsg = _('The stock movements for the selected criteria could not be retrieved because') . ' - ';

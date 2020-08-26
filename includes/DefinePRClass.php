@@ -53,7 +53,8 @@ Class PaymentRequest {
 	$sourcedescription,
 	$exrate,
 	$functionalexrate,
-	$paymenttypes){
+	$paymenttypes,
+	$completed){
 
 		if ($amount!=0 and isset($amount)){
 
@@ -75,8 +76,8 @@ Class PaymentRequest {
 			$sourcedescription,
 			$exrate,
 			$functionalexrate,
-			$paymenttypes
-												);
+			$paymenttypes,
+			$completed									);
 			$this->LinesOnOrder++;
 			Return 1;
 		}
@@ -218,7 +219,8 @@ Class LineDetails {
 	$sourcedescription,
 	$exrate,
 	$functionalexrate,
-	$paymenttypes
+	$paymenttypes,
+	$completed
 						)	{
 
 	/* Constructor function to add a new LineDetail object with passed params */
@@ -242,6 +244,7 @@ Class LineDetails {
 	$this->Total_Amount = $Total_Amount;
 	$this->FunctionalExrate = $functionalexrate;
 	$this->PaymentTypes = $paymenttypes;
+	$this->Completed = $completed;
 
 	}
 	function LineDetails($LineNo,
@@ -262,7 +265,8 @@ Class LineDetails {
 	$sourcedescription,
 	$exrate,
 	$functionalexrate,
-	$paymenttypes
+	$paymenttypes,
+	$completed
 						) {
 		self::__construct($LineNo,
 		$chequeno,
@@ -282,7 +286,8 @@ Class LineDetails {
 		$sourcedescription,
 		$exrate,
 		$functionalexrate,
-		$paymenttypes
+		$paymenttypes,
+		$completed
 					);
 	}
 }

@@ -1,184 +1,262 @@
 <?php
+/*	PrintCustTransPortrait.php */
+/*  Print Invoices or Credit Notes (Portrait Mode) */
 
+include('includes/session.php');
+$Title = _('Print issue Note Summary (Portrait Mode)');
+$ViewTopic = 'ARReports';
+$BookMark = 'PrintInvoicesCredits';
 
-include ('includes/session.php');
-include('includes/SQL_CommonFunctions.inc');
-
-if (isset($_GET['IssueNo'])){
-	$_POST['IssueNo'] = $_GET['IssueNo'];
+if(isset($_GET['IssueNo'])) {
+	$IssueNo = filter_number_format($_GET['IssueNo']);
+} elseif(isset($_POST['IssueNo'])) {
+	$IssueNo = filter_number_format($_POST['IssueNo']);
+} else {
+	$IssueNo = '';
 }
 
-if (isset($_POST['IssueNo']) and $_POST['IssueNo']!='') {
-	$SQL= "SELECT bankaccountname,
-				bankaccountnumber,
-				ref,
-				transdate,
-				banktranstype,
-				bankact,
-				banktrans.exrate,
-				banktrans.functionalexrate,
-				banktrans.currcode,
-				currencies.decimalplaces AS currdecimalplaces
-			FROM bankaccounts INNER JOIN banktrans
-			ON bankaccounts.accountcode=banktrans.bankact
-			INNER JOIN currencies
-			ON bankaccounts.currcode=currencies.currabrev
-			WHERE banktrans.transno='" . $_POST['BatchNo'] . "'
-			AND banktrans.type=12";
+if(isset($_GET['InvOrCredit'])) {
+	$InvOrCredit = $_GET['InvOrCredit'];
+} elseif(isset($_POST['InvOrCredit'])) {
+	$InvOrCredit = $_POST['InvOrCredit'];
+}
 
-	$ErrMsg = _('An error occurred getting the header information about the receipt batch number') . ' ' . $_POST['BatchNo'];
-	$DbgMsg = _('The SQL used to get the receipt header information that failed was');
-	$Result=DB_query($SQL,$ErrMsg,$DbgMsg);
+if(isset($_GET['PrintPDF'])) {
+	$PrintPDF = $_GET['PrintPDF'];
+} elseif(isset($_POST['PrintPDF'])) {
+	$PrintPDF = $_POST['PrintPDF'];
+}
 
-	if (DB_num_rows($Result) == 0){
-		$Title = _('Create PDF Print-out For A Batch Of Receipts');
-		include ('includes/header.php');
-		prnMsg(_('The receipt batch number') . ' ' . $_POST['BatchNo'] . ' ' . _('was not found in the database') . '. ' . _('Please try again selecting a different batch number'), 'warn');
-		include('includes/footer.php');
-		exit;
-	}
-	/* OK get the row of receipt batch header info from the BankTrans table */
-	$myrow = DB_fetch_array($Result);
-	$ExRate = $myrow['exrate'];
-	$FunctionalExRate = $myrow['functionalexrate'];
-	$Currency = $myrow['currcode'];
-	$BankTransType = $myrow['banktranstype'];
-	$BankedDate =  $myrow['transdate'];
-	$BankActName = $myrow['bankaccountname'];
-	$BankActNumber = $myrow['bankaccountnumber'];
-	$BankingReference = $myrow['ref'];
-    $BankCurrDecimalPlaces = $myrow['currdecimalplaces'];
+if(!isset($_POST['ToTransNo'])
+	OR trim($_POST['ToTransNo'])==''
+	OR filter_number_format($_POST['ToTransNo']) < $IssueNo) {
 
-	$SQL = "SELECT debtorsmaster.name,
-			ovamount,
-			invtext,
-			reference
-		FROM debtorsmaster INNER JOIN debtortrans
-		ON debtorsmaster.debtorno=debtortrans.debtorno
-		WHERE debtortrans.transno='" . $_POST['BatchNo'] . "'
-		AND debtortrans.type=12";
+	$_POST['ToTransNo'] = $IssueNo;
+}
 
-	$CustRecs=DB_query($SQL,'','',false,false);
-	if (DB_error_no()!=0){
-		$Title = _('Create PDF Print-out For A Batch Of Receipts');
-		include ('includes/header.php');
-	   	prnMsg(_('An error occurred getting the customer receipts for batch number') . ' ' . $_POST['BatchNo'],'error');
-		if ($debug==1){
-	        	prnMsg(_('The SQL used to get the customer receipt information that failed was') . '<br />' . $SQL,'error');
-	  	}
-		include('includes/footer.php');
-	  	exit;
-	}
-	$SQL = "SELECT narrative,
-			amount,payeedetails
-		FROM gltrans
-		WHERE gltrans.typeno='" . $_POST['BatchNo'] . "'
-		AND gltrans.type=12 and gltrans.amount <0
-		AND gltrans.account !='" . $myrow['bankact'] . "'
-		AND gltrans.account !='" . $_SESSION['CompanyRecord']['debtorsact'] . "'";
+$FirstTrans = $IssueNo; /* Need to start a new page only on subsequent transactions */
 
-	$GLRecs=DB_query($SQL,'','',false,false);
-	if (DB_error_no()!=0){
-		$Title = _('Create PDF Print-out For A Batch Of Receipts');
-		include ('includes/header.php');
-		prnMsg(_('An error occurred getting the GL receipts for batch number') . ' ' . $_POST['BatchNo'],'error');
-		if ($debug==1){
-			prnMsg(_('The SQL used to get the GL receipt information that failed was') . ':<br />' . $SQL,'error');
-		}
-		include('includes/footer.php');
-		exit;
+if(isset($PrintPDF)
+	and $PrintPDF!=''
+	and isset($IssueNo)
+	and isset($InvOrCredit)
+	and $IssueNo!='') {
+
+	include ('includes/PDFStarter.php');
+
+	if($InvOrCredit=='Invoice') {
+		$pdf->addInfo('Title',_('Issue Note') . ' ' . $IssueNo . ' ' . _('to') . ' ' . $_POST['ToTransNo']);
+		$pdf->addInfo('Subject',_('Invoices from') . ' ' . $IssueNo . ' ' . _('to') . ' ' . $_POST['ToTransNo']);
+	} else {
+		$pdf->addInfo('Title',_('Sales Credit Note') );
+		$pdf->addInfo('Subject',_('Credit Notes from') . ' ' . $IssueNo . ' ' . _('to') . ' ' . $_POST['ToTransNo']);
 	}
 
-	$PaperSize='Z5';
-	include('includes/PDFStarter.php');
+	$FirstPage = true;
+	$line_height=16;
 
-	/*PDFStarter.php has all the variables for page size and width set up depending on the users default preferences for paper size */
+	//Keep a record of the user's language
+	$UserLanguage = $_SESSION['Language'];
 
-	$pdf->addInfo('Title',_('Banking Summary'));
-	$pdf->addInfo('Subject',_('Banking Summary Number') . ' ' . $_POST['BatchNo']);
-	$line_height=12;
-	$PageNumber = 0;
-	$TotalBanked = 0;
-    
-	include ('includes/PDFIssueSummaryPageHeader.inc');
+	while($IssueNo <= filter_number_format($_POST['ToTransNo'])) {
 
-	while ($myrow=DB_fetch_array($CustRecs)){
-        $FontSize = 10;
-		$lines=explode("\r\n",htmlspecialchars_decode($myrow['invtext']));
-		for ($i=0;$i<sizeOf($lines);$i++) {
-			while(mb_strlen($lines[$i])>1) {
-				if($YPos-$line_height <= $Bottom_Margin) {
-					/* head up a new invoice/credit note page */
-					/*draw the vertical column lines right to the bottom */
-					PrintLinesToBottom ();
-					include ('includes/PDFIssueSummaryPageHeader.inc');
-				} //end if need a new page headed up
-				/*increment a line down for the next line item */
-				if(mb_strlen($lines[$i])>1) {
-					$lines[$i] = $pdf->addTextWrap($Left_Margin,$YPos,120,9,stripslashes($lines[$i]), 'left');
-				}
-				$YPos -= ($line_height-2);
+	/*retrieve the invoice details from the database to print
+	notice that salesorder record must be present to print the invoice purging of sales orders will
+	nobble the invoice reprints */
+
+	
+// gather the issue note data
+
+		if($InvOrCredit=='Invoice') {
+			$sql = "SELECT stockrequest.dispatchid,
+							stockrequest.despatchdate,
+							stockrequest.lcost,
+							stockrequest.authorised_by,
+							stockrequest.fullfill_by,
+							stockrequest.initiator,
+							locationcost.costname
+						FROM stockrequest INNER JOIN locationcost
+						ON stockrequest.lcost=locationcost.costid
+						WHERE stockrequest.dispatchid='" . $IssueNo . "'";
+
+		} 
+
+		$result=DB_query($sql,'','',false,false);
+
+		if(DB_error_no()!=0) {
+
+			$Title = _('Issue Print Error Report');
+			include ('includes/header.php');
+
+			prnMsg( _('There was a problem retrieving the issue note details for note number') . ' ' . $InvoiceToPrint . ' ' . _('from the database') . '. ' . _('To print an invoice, the sales order record, the customer transaction record and the branch record for the customer must not have been purged') . '. ' . _('To print a credit note only requires the customer, transaction, salesman and branch records be available'),'error');
+			if($debug==1) {
+				prnMsg (_('The SQL used to get this information that failed was') . '<br />' . $sql,'error');
 			}
+			include ('includes/footer.php');
+			exit;
+		}
+		if(DB_num_rows($result)==1) {
+			$myrow = DB_fetch_array($result);
+
+			$RequestNo = $myrow['dispatchid'];
+			$RequestDate = $myrow['despatchdate'];
+			$Authoriser = $myrow['authorised_by'];
+			$Initiator = $myrow['initiator'];
+			$Dispenser = $myrow['fullfill_by'];
+			$Cost = $myrow['costname'];
+
+			//Change the language to the customer's language
+			$_SESSION['Language'] = $myrow['language_id'];
+			include('includes/LanguageSetup.php');
+
+			if($InvOrCredit == 'Invoice') {
+				$sql = "SELECT stockrequestitems.stockid,
+						stockmaster.description,
+						stockrequestitems.quantity,
+						stockrequestitems.qtydelivered,
+						stockrequestitems.uom,
+						stockrequestitems.decimalplaces
+					FROM stockrequestitems INNER JOIN stockmaster
+					ON stockrequestitems.stockid = stockmaster.stockid
+					WHERE stockrequestitems.dispatchid='" . $IssueNo . "'";
+			} 
+			
+
+		$result=DB_query($sql);
+		if(DB_error_no()!=0) {
+			$Title = _('Transaction Print Error Report');
+			include ('includes/header.php');
+			echo '<br />' . _('There was a problem retrieving the invoice or credit note stock movement details for invoice number') . ' ' . $IssueNo . ' ' . _('from the database');
+			if($debug==1) {
+				echo '<br />' . _('The SQL used to get this information that failed was') . '<br />' . $sql;
+			}
+			include('includes/footer.php');
+			exit;
 		}
 
-		//$LeftOvers = $pdf->addTextWrap($Left_Margin,$YPos,30,$FontSize,$myrow['name'], 'right');
-		$LeftOvers = $pdf->addTextWrap($Left_Margin+100,$YPos+10,100,9,locale_number_format(-$myrow['ovamount'],$BankCurrDecimalPlaces), 'right');
 
+		if(DB_num_rows($result)>0) {
 
-		$YPos -= ($line_height-6);
-		$TotalBanked -= $myrow['ovamount'];
-		$Name = $myrow['name'];
-        $FontSize = 10;
-        $LeftOvers = $pdf->addTextWrap($Left_Margin+40,$YPos + 63,300,10, $Name , 'left');
-		if ($YPos - (2 *$line_height) < $Bottom_Margin){
-			/*Then set up a new page */
-			include ('includes/PDFIssueSummaryPageHeader.inc');
-		} /*end of new page header  */
-	} /* end of while there are customer receipts in the batch to print */
+			$FontSize = 10;
+			$PageNumber = 1;
 
-	/* Right now print out the GL receipt entries in the batch */
-	while ($myrow=DB_fetch_array($GLRecs)){
+			include('includes/PDFIssueSummaryPageHeader.inc');
+			$FirstPage = False;
 
-		$lines=explode("\r\n",htmlspecialchars_decode($myrow['narrative']));
-				for ($i=0;$i<sizeOf($lines);$i++) {
-					while(mb_strlen($lines[$i])>1) {
-						if($YPos-$line_height <= $Bottom_Margin) {
-							/* head up a new invoice/credit note page */
-							/*draw the vertical column lines right to the bottom */
-							PrintLinesToBottom ();
-							include ('includes/PDFIssueSummaryPageHeader.inc');
-						} //end if need a new page headed up
-						/*increment a line down for the next line item */
-						if(mb_strlen($lines[$i])>1) {
-							$lines[$i] = $pdf->addTextWrap($Left_Margin,$YPos,120,10,stripslashes($lines[$i]), 'left');
-						}
-						$YPos -= ($line_height-2);
-					}
+			while($myrow2=DB_fetch_array($result)) {
+				
+				
+
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+5,$YPos,71,$FontSize,$myrow2['stockid']);// Print item code.
+				//Get translation if it exists
+
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+80,$YPos,220,$FontSize,$myrow2['description']);// Print item short description.
+
+				$lines=1;
+				while($LeftOvers!='') {
+					$LeftOvers = $pdf->addTextWrap($Left_Margin+80,$YPos-(10*$lines),220,$FontSize,$LeftOvers);
+					$lines++;
 				}
 
-		//$LeftOvers = $pdf->MultiCell($Left_Margin, $YPos, '[LEFT] '.$myrow['narrative'], 1, 'L', 1, 0, '', '', true);
-		$LeftOvers = $pdf->addTextWrap($Left_Margin+100,$YPos+10,100,9,locale_number_format((-$myrow['amount']*$ExRate*$FunctionalExRate),$BankCurrDecimalPlaces),'right');
-		$YPos -= ($line_height-6);
-		$TotalBanked +=  (-$myrow['amount']*$ExRate);
-		$Name = $myrow['payeedetails'];
-        $FontSize = 10;
-        $LeftOvers = $pdf->addTextWrap($Left_Margin+40,$YPos + 70,300,12, $Name , 'left');
-		if ($YPos - (2 *$line_height) < $Bottom_Margin){
-			/*Then set up a new page */
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+250,$YPos,120,$FontSize,$myrow2['quantity'],'right');
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+400,$YPos,36,$FontSize,$myrow2['qtydelivered'],'right');
+				$LeftOvers = $pdf->addTextWrap($Left_Margin+490,$YPos,26,$FontSize,$myrow2['uom'],'center');
+				
+
+				$YPos -= ($FontSize*$lines);
+
+
+			} /*end while there are line items to print out*/
+
+		} /*end if there are stock movements to show on the invoice or credit note*/
+
+		$YPos -= $line_height;
+
+		/* check to see enough space left to print the 4 lines for the totals/footer */
+		if(($YPos-$Bottom_Margin)<(2*$line_height)) {
+			PrintLinesToBottom ();
 			include ('includes/PDFIssueSummaryPageHeader.inc');
-		} /*end of new page header  */
-	} /* end of while there are GL receipts in the batch to print */
-    
-	$YPos =$Bottom_Margin + 2;
-	$LeftOvers = $pdf->addTextWrap($Left_Margin,$Bottom_Margin+20,300,$FontSize,_('TOTAL') . ' ' . $Currency . ' ' . _('BANKED'), 'left');
-	$LeftOvers = $pdf->addTextWrap($Left_Margin+100,$Bottom_Margin+20,100,9,locale_number_format($TotalBanked,2), 'right');
+		}
+		/*Print a column vertical line with enough space for the footer*/
+		/*draw the vertical column lines to 4 lines shy of the bottom
+		to leave space for invoice footer info ie totals etc*/
+		$pdf->line($Left_Margin+78, $TopOfColHeadings,$Left_Margin+78,$Bottom_Margin+(4*$line_height));
 
-	$FontSize = 6;
+		
 
-	$LeftOvers = $pdf->addTextWrap($Left_Margin+60, $Bottom_Margin+5, 144, $FontSize, _('Issued by :'). ' ' .$_SESSION['UsersRealName']);
-	$pdf->line($Left_Margin+150, $Bottom_Margin+5,$Page_Width-$Right_Margin, $Bottom_Margin+5);
-	$pdf->OutputD($_SESSION['DatabaseName'] . '_BankingSummary_' . date('Y-m-d').'.pdf');
+		/*Print a column vertical line */
+		$pdf->line($Left_Margin+348, $TopOfColHeadings,$Left_Margin+348,$Bottom_Margin+(4*$line_height));
+
+		
+		/*Print a column vertical line */
+		$pdf->line($Left_Margin+418, $TopOfColHeadings,$Left_Margin+418,$Bottom_Margin+(4*$line_height));
+
+		$pdf->line($Left_Margin+490, $TopOfColHeadings,$Left_Margin+490,$Bottom_Margin+(4*$line_height));
+
+		/*Rule off at bottom of the vertical lines */
+		$pdf->line($Left_Margin, $Bottom_Margin+(4*$line_height),$Page_Width-$Right_Margin,$Bottom_Margin+(4*$line_height));
+
+		/*Now print out the footer and totals */
+
+		
+
+		$YPos = $Bottom_Margin+(3*$line_height);
+		
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 40, $YPos+5, 72, $FontSize, _('Requested By'));
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 30, $YPos-15, 72, $FontSize, $Initiator);
+		
+		
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 240, $YPos+5, 72, $FontSize, _('Authorised By'));
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 230, $YPos-15, 72, $FontSize, $Authoriser);
+		
+		
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 440, $YPos+5, 72, $FontSize, _('Dispense By'));
+		$LeftOvers = $pdf->addTextWrap($Left_Margin + 430, $YPos-15, 72, $FontSize, $Dispenser);
+	    
+		} /* end of check to see that there was an invoice record to print */
+
+		$IssueNo++;
+	} /* end loop to print invoices */
+
+	/* Put the transaction number back as would have been incremented by one after last pass */
+	$IssueNo--;
+
+	if(isset($_GET['Email'])) { //email the invoice to address supplied
+		include ('includes/htmlMimeMail.php');
+		$FileName = $_SESSION['reports_dir'] . '/' . $_SESSION['DatabaseName'] . '_' . $InvOrCredit . '_' . $_GET['IssueNo'] . '.pdf';
+		$pdf->Output($FileName,'F');
+		$mail = new htmlMimeMail();
+
+		$Attachment = $mail->getFile($FileName);
+		$mail->setText(_('Please find attached') . ' ' . $InvOrCredit . ' ' . $_GET['IssueNo'] );
+		$mail->SetSubject($InvOrCredit . ' ' . $_GET['IssueNo']);
+		$mail->addAttachment($Attachment, $FileName, 'application/pdf');
+		if($_SESSION['SmtpSetting'] == 0) {
+			$mail->setFrom($_SESSION['CompanyRecord']['coyname'] . ' <' . $_SESSION['CompanyRecord']['email'] . '>');
+			$result = $mail->send(array($_GET['Email']));
+		} else {
+			$result = SendmailBySmtp($mail,array($_GET['Email']));
+		}
+
+		unlink($FileName); //delete the temporary file
+
+		$Title = _('Emailing') . ' ' .$InvOrCredit . ' ' . _('Number') . ' ' . $IssueNo;
+		include('includes/header.php');
+		echo '<p>' . $InvOrCredit . ' ' . _('number') . ' ' . $IssueNo . ' ' . _('has been emailed to') . ' ' . $_GET['Email'];
+		include('includes/footer.php');
+		exit;
+
+	} else { //its not an email just print the invoice to PDF
+		$pdf->OutputD($_SESSION['DatabaseName'] . '_' . $InvOrCredit . '_' . $IssueNo . '.pdf');
+
+	}
 	$pdf->__destruct();
-}
+	//Change the language back to the user's language
+	$_SESSION['Language'] = $UserLanguage;
+	include('includes/LanguageSetup.php');
+
+} 
+
+
 
 ?>

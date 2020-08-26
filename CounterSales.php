@@ -29,6 +29,7 @@ if (isset($_SESSION['Items'.$identifier]) AND isset($_POST['CustRef'])) {
 	$_SESSION['Items'.$identifier]->CustRef = $_POST['CustRef'];
 	$_SESSION['Items'.$identifier]->Comments = $_POST['Comments'];
 	$_SESSION['Items'.$identifier]->DeliverTo = $_POST['DeliverTo'];
+	$_SESSION['Items'.$identifier]->SalesDate = $_POST['SalesDate'];
 	$_SESSION['Items'.$identifier]->PhoneNo = $_POST['PhoneNo'];
 	$_SESSION['Items'.$identifier]->Email = $_POST['Email'];
 	if ($_SESSION['SalesmanLogin'] != '') {
@@ -869,9 +870,14 @@ if (count($_SESSION['Items'.$identifier]->LineItems)>0 ) { /*only show order lin
 	echo '<input type="hidden" name="TaxTotal" value="'.$TaxTotal.'" />';
 	echo '<table><tr><td>';
 	//nested table
+	
 	echo '<table><tr>
 		<td>' .  _('Picked Up By') .':</td>
 		<td><input type="text" size="25" maxlength="25" name="DeliverTo" value="' . stripslashes($_SESSION['Items'.$identifier]->DeliverTo) . '" /></td>
+	</tr>';
+	echo '<tr>
+		<td>' .  _('Date of Sales') .':</td>
+		<td><input class="date" maxlength="25" name="SalesDate" required="required" size="25"  type="text" value="'. stripslashes($_SESSION['Items'.$identifier]->SalesDate) . '" /></td>
 	</tr>';
 	echo '<tr>
 		<td>' .  _('Contact Phone Number') .':</td>
@@ -1085,7 +1091,9 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 	/*First add the order to the database - it only exists in the session currently! */
 		$OrderNo = GetNextTransNo(30);
 		$InvoiceNo = GetNextTransNo(10);
-		$PeriodNo = GetPeriod(Date($_SESSION['DefaultDateFormat']));
+		$PeriodNo = GetPeriod($_SESSION['Items'.$identifier]->SalesDate);
+
+		$DefaultSalesDate = FormatDateForSQL($_SESSION['Items'.$identifier]->SalesDate);
 
 		$HeaderSQL = "INSERT INTO salesorders (	orderno,
 												debtorno,
@@ -1312,7 +1320,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 
 
 
-		$DefaultDispatchDate = Date('Y-m-d');
+		//$DefaultSalesDate = Date('Y-m-d');
 
 	/*Update order header for invoice charged on */
 		$SQL = "UPDATE salesorders SET comments = CONCAT(comments,'" . ' ' . _('Invoice') . ': ' . "','" . $InvoiceNo . "') WHERE orderno= '" . $OrderNo."'";
@@ -1346,7 +1354,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 				10,
 				'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
 				'" . $_SESSION['Items'.$identifier]->Branch . "',
-				'" . $DefaultDispatchDate . "',
+				'" . $DefaultSalesDate . "',
 				'" . date('Y-m-d H-i-s') . "',
 				'" . $PeriodNo . "',
 				'" . $_SESSION['Items'.$identifier]->CustRef  . "',
@@ -1478,7 +1486,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 												 10,
 												'" . $InvoiceNo . "',
 												'" . $_SESSION['Items'.$identifier]->Location . "',
-												'" . $DefaultDispatchDate . "',
+												'" . $DefaultSalesDate . "',
 												'" . $_SESSION['UserID'] . "',
 												'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
 												'" . $_SESSION['Items'.$identifier]->Branch . "',
@@ -1536,7 +1544,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 								10,
 								'" . $InvoiceNo . "',
 								'" . $_SESSION['Items'.$identifier]->Location . "',
-								'" . $DefaultDispatchDate . "',
+								'" . $DefaultSalesDate . "',
 								'" . $_SESSION['UserID'] . "',
 								'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
 								'" . $_SESSION['Items'.$identifier]->Branch . "',
@@ -1572,7 +1580,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 										10,
 										'" . $InvoiceNo . "',
 										'" . $_SESSION['Items'.$identifier]->Location . "',
-										'" . $DefaultDispatchDate . "',
+										'" . $DefaultSalesDate . "',
 										'" . $_SESSION['UserID'] . "',
 										'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
 										'" . $_SESSION['Items'.$identifier]->Branch . "',
@@ -1770,7 +1778,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 												payeedetails)
 										VALUES ( 10,
 												'" . $InvoiceNo . "',
-												'" . $DefaultDispatchDate . "',
+												'" . $DefaultSalesDate . "',
 												'" . $PeriodNo . "',
 												'" . GetCOGSGLAccount($Area, $OrderLine->StockID, $_SESSION['Items'.$identifier]->DefaultSalesType) . "',
 												'" . $_SESSION['Items'.$identifier]->DebtorNo . " - " . $OrderLine->StockID . " x " . $OrderLine->Quantity . " @ " . $OrderLine->StandardCost . "',
@@ -1802,7 +1810,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											payeedetails)
 										VALUES ( 10,
 											'" . $InvoiceNo . "',
-											'" . $DefaultDispatchDate . "',
+											'" . $DefaultSalesDate . "',
 											'" . $PeriodNo . "',
 											'" . $StockGLCode['stockact'] . "',
 											'" . $_SESSION['Items'.$identifier]->DebtorNo . " - " . $OrderLine->StockID . " x " . $OrderLine->Quantity . " @ " . $OrderLine->StandardCost . "',
@@ -1837,7 +1845,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											payeedetails)
 										VALUES ( 10,
 											'" . $InvoiceNo . "',
-											'" . $DefaultDispatchDate . "',
+											'" . $DefaultSalesDate . "',
 											'" . $PeriodNo . "',
 											'" . $SalesGLAccounts['salesglcode'] . "',
 											'" . $_SESSION['Items'.$identifier]->DebtorNo . " - " . $OrderLine->StockID . " x " . $OrderLine->Quantity . " @ " . $OrderLine->Price . "',
@@ -1868,7 +1876,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											    payeedetails)
 												VALUES ( 10,
 													'" . $InvoiceNo . "',
-													'" . $DefaultDispatchDate . "',
+													'" . $DefaultSalesDate . "',
 													'" . $PeriodNo . "',
 													'" . $SalesGLAccounts['discountglcode'] . "',
 													'" . $_SESSION['Items'.$identifier]->DebtorNo . " - " . $OrderLine->StockID . " @ " . ($OrderLine->DiscountPercent * 100) . "%',
@@ -1904,7 +1912,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											    payeedetails)
 											VALUES ( 10,
 												'" . $InvoiceNo . "',
-												'" . $DefaultDispatchDate . "',
+												'" . $DefaultSalesDate . "',
 												'" . $PeriodNo . "',
 												'" . $_SESSION['CompanyRecord']['debtorsact'] . "',
 												'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
@@ -1937,7 +1945,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											        payeedetails)
 												VALUES ( 10,
 													'" . $InvoiceNo . "',
-													'" . $DefaultDispatchDate . "',
+													'" . $DefaultSalesDate . "',
 													'" . $PeriodNo . "',
 													'" . $_SESSION['Items'.$identifier]->TaxGLCodes[$TaxAuthID] . "',
 													'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
@@ -1971,7 +1979,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 											amount)
 						VALUES (12,
 							'" . $ReceiptNumber . "',
-							'" . $DefaultDispatchDate . "',
+							'" . $DefaultSalesDate . "',
 							'" . $PeriodNo . "',
 							'" . $_POST['BankAccount'] . "',
 							'" . $_SESSION['Items'.$identifier]->LocationName . ' ' . _('Counter Sale') . ' ' . $InvoiceNo . "',
@@ -1990,7 +1998,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 						amount)
 				VALUES (12,
 					'" . $ReceiptNumber . "',
-					'" . $DefaultDispatchDate . "',
+					'" . $DefaultSalesDate . "',
 					'" . $PeriodNo . "',
 					'" . $_SESSION['CompanyRecord']['debtorsact'] . "',
 					'" . $_SESSION['Items'.$identifier]->LocationName . ' ' . _('Counter Sale') . ' ' . $InvoiceNo . "',
@@ -2046,7 +2054,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 						'" . mb_substr($_SESSION['Items'.$identifier]->LocationName . ' ' . _('Counter Sale') . ' ' . $InvoiceNo, 0, 50) . "',
 						'" . $ExRate . "',
 						'" . $BankAccountExRate . "',
-						'" . $DefaultDispatchDate . "',
+						'" . $DefaultSalesDate . "',
 						'" . $_POST['PaymentMethod'] . "',
 						'" . filter_number_format($_POST['AmountPaid']) * $BankAccountExRate . "',
 						'" . $_SESSION['Items'.$identifier]->DefaultCurrency . "')";
@@ -2073,7 +2081,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 					VALUES ('" . $ReceiptNumber . "',
 						12,
 						'" . $_SESSION['Items'.$identifier]->DebtorNo . "',
-						'" . $DefaultDispatchDate . "',
+						'" . $DefaultSalesDate . "',
 						'" . date('Y-m-d H-i-s') . "',
 						'" . $PeriodNo . "',
 						'" . $InvoiceNo . "',
@@ -2090,7 +2098,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 
 			$ReceiptDebtorTransID = DB_Last_Insert_ID('debtortrans','id');
 
-			$SQL = "UPDATE debtorsmaster SET lastpaiddate = '" . $DefaultDispatchDate . "',
+			$SQL = "UPDATE debtorsmaster SET lastpaiddate = '" . $DefaultSalesDate . "',
 											lastpaid='" . filter_number_format($_POST['AmountPaid']) . "'
 									WHERE debtorsmaster.debtorno='" . $_SESSION['Items'.$identifier]->DebtorNo . "'";
 
@@ -2105,7 +2113,7 @@ if (isset($_POST['ProcessSale']) AND $_POST['ProcessSale'] != '') {
 												transid_allocfrom,
 												transid_allocto )
 									VALUES  ('" . filter_number_format($_POST['AmountPaid']) . "',
-											'" . $DefaultDispatchDate . "',
+											'" . $DefaultSalesDate . "',
 											 '" . $ReceiptDebtorTransID . "',
 											 '" . $DebtorTransID . "')";
 			$DbgMsg = _('The SQL that failed to insert the allocation of the receipt to the invoice was');
@@ -2541,7 +2549,8 @@ if (!isset($_POST['ProcessSale'])) {
             echo '<input type="hidden" name="Comments" value="' . $_SESSION['Items'.$identifier]->Comments . '" />';
             echo '<input type="hidden" name="DeliverTo" value="' . $_SESSION['Items'.$identifier]->DeliverTo . '" />';
             echo '<input type="hidden" name="PhoneNo" value="' . $_SESSION['Items'.$identifier]->PhoneNo . '" />';
-            echo '<input type="hidden" name="Email" value="' . $_SESSION['Items'.$identifier]->Email . '" />';
+			echo '<input type="hidden" name="Email" value="' . $_SESSION['Items'.$identifier]->Email . '" />';
+			echo '<input type="hidden" name="SalesDate" value="' . $_SESSION['Items'.$identifier]->SalesDate . '" />';
         }
 		echo '<table border="1">
 				<tr>

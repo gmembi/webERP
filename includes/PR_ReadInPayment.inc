@@ -75,7 +75,8 @@
                                     source.sourcedescription,
 									exrate,
 									functionalexrate,
-									payrequestdetails.paymenttypes
+									payrequestdetails.paymenttypes,
+									payrequestdetails.completed
 								FROM payrequestdetails
 								LEFT JOIN bankaccounts
 									ON payrequestdetails.bankact=bankaccounts.accountcode
@@ -125,7 +126,8 @@
 															$myrow['sourcedescription'],
 															$myrow['exrate'],
 															$myrow['functionalexrate'],
-															$myrow['paymenttypes']
+															$myrow['paymenttypes'],
+															$myrow['completed']
 															 );
 
 					$_SESSION['PR'.$identifier]->LineItems[$_SESSION['PR'.$identifier]->LinesOnOrder]->PODetailRec = $myrow['paynoid'];
