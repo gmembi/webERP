@@ -107,7 +107,7 @@ $SQL = "SELECT stockmoves.stockid,
 			ON stockmoves.type = systypes.typeid
 		INNER JOIN stockmaster
 			ON stockmoves.stockid = stockmaster.stockid
-		INNER JOIN custbranch
+		LEFT JOIN custbranch
 			ON stockmoves.debtorno = custbranch.debtorno
 			AND stockmoves.branchcode = custbranch.branchcode
 		WHERE  stockmoves.loccode = '" . $_POST['StockLocation'] . "'
@@ -161,48 +161,48 @@ if (DB_num_rows($MovtsResult) > 0) {
 			}
 		}
 
-		if ($MyRow['type'] == 10) {
-			/*its a sales invoice allow link to show invoice it was sold on*/
+		// if ($MyRow['type'] == 10) {
+		// 	/*its a sales invoice allow link to show invoice it was sold on*/
 
-			echo '<tr class="striped_row">
-					<td><a target="_blank" href="', $RootPath, '/PrintCustTrans.php?FromTransNo=', urlencode($MyRow['transno']), '&amp;InvOrCredit=Invoice">', $MyRow['typename'], '</a></td>
-					<td>', $MyRow['transno'], '</td>
-					<td>', $DisplayTranDate, '</td>
-					<td>', $MyRow['userid'], '</td>
-					<td>', $MyRow['debtorno'], '</td>
-					<td>', $MyRow['branchcode'], ' - ', $MyRow['brname'], '</td>
-					<td class="number">', locale_number_format($MyRow['qty'], $MyRow['decimalplaces']), '</td>
-					<td>', $MyRow['reference'], '</td>
-					<td class="number">', locale_number_format($MyRow['price'], $_SESSION['CompanyRecord']['decimalplaces']), '</td>
-					<td class="number">', locale_number_format($MyRow['discountpercent'] * 100, 2), '%%</td>
-					<td class="number">', locale_number_format($MyRow['newqoh'], $MyRow['decimalplaces']), '</td>
-					<td>', $MyRow['narrative'], '</td>';
-			if ($MyRow['controlled'] == 1) {
-				echo '<td>', $SerialText, '</td>';
-			}
-			echo '</tr>';
+		// 	echo '<tr class="striped_row">
+		// 			<td><a target="_blank" href="', $RootPath, '/PrintCustTrans.php?FromTransNo=', urlencode($MyRow['transno']), '&amp;InvOrCredit=Invoice">', $MyRow['typename'], '</a></td>
+		// 			<td>', $MyRow['transno'], '</td>
+		// 			<td>', $DisplayTranDate, '</td>
+		// 			<td>', $MyRow['userid'], '</td>
+		// 			<td>', $MyRow['debtorno'], '</td>
+		// 			<td>', $MyRow['branchcode'], ' - ', $MyRow['brname'], '</td>
+		// 			<td class="number">', locale_number_format($MyRow['qty'], $MyRow['decimalplaces']), '</td>
+		// 			<td>', $MyRow['reference'], '</td>
+		// 			<td class="number">', locale_number_format($MyRow['price'], $_SESSION['CompanyRecord']['decimalplaces']), '</td>
+		// 			<td class="number">', locale_number_format($MyRow['discountpercent'] * 100, 2), '%%</td>
+		// 			<td class="number">', locale_number_format($MyRow['newqoh'], $MyRow['decimalplaces']), '</td>
+		// 			<td>', $MyRow['narrative'], '</td>';
+		// 	if ($MyRow['controlled'] == 1) {
+		// 		echo '<td>', $SerialText, '</td>';
+		// 	}
+		// 	echo '</tr>';
 
-		} elseif ($MyRow['type'] == 11) {
+		// } elseif ($MyRow['type'] == 11) {
 
-			echo '<tr class="striped_row">
-					<td><a target="_blank" href="', $RootPath, '/PrintCustTrans.php?FromTransNo=', urlencode($MyRow['transno']), '&amp;InvOrCredit=Credit">', $MyRow['typename'], '</a></td>
-					<td>', $MyRow['transno'], '</td>
-					<td>', $DisplayTranDate, '</td>
-					<td>', $MyRow['userid'], '</td>
-					<td>', $MyRow['debtorno'], '</td>
-					<td>', $MyRow['branchcode'], '</td>
-					<td class="number">', locale_number_format($MyRow['qty'], $MyRow['decimalplaces']), '</td>
-					<td>', $MyRow['reference'], '</td>
-					<td class="number">', locale_number_format($MyRow['price'], $_SESSION['CompanyRecord']['decimalplaces']), '</td>
-					<td class="number">', locale_number_format($MyRow['discountpercent'] * 100, 2), '%%</td>
-					<td class="number">', locale_number_format($MyRow['newqoh'], $MyRow['decimalplaces']), '</td>
-					<td>', $MyRow['narrative'], '</td>';
-			if ($MyRow['controlled'] == 1) {
-				echo '<td>', $SerialText, '</td>';
-			}
-			echo '</tr>';
+		// 	echo '<tr class="striped_row">
+		// 			<td><a target="_blank" href="', $RootPath, '/PrintCustTrans.php?FromTransNo=', urlencode($MyRow['transno']), '&amp;InvOrCredit=Credit">', $MyRow['typename'], '</a></td>
+		// 			<td>', $MyRow['transno'], '</td>
+		// 			<td>', $DisplayTranDate, '</td>
+		// 			<td>', $MyRow['userid'], '</td>
+		// 			<td>', $MyRow['debtorno'], '</td>
+		// 			<td>', $MyRow['branchcode'], '</td>
+		// 			<td class="number">', locale_number_format($MyRow['qty'], $MyRow['decimalplaces']), '</td>
+		// 			<td>', $MyRow['reference'], '</td>
+		// 			<td class="number">', locale_number_format($MyRow['price'], $_SESSION['CompanyRecord']['decimalplaces']), '</td>
+		// 			<td class="number">', locale_number_format($MyRow['discountpercent'] * 100, 2), '%%</td>
+		// 			<td class="number">', locale_number_format($MyRow['newqoh'], $MyRow['decimalplaces']), '</td>
+		// 			<td>', $MyRow['narrative'], '</td>';
+		// 	if ($MyRow['controlled'] == 1) {
+		// 		echo '<td>', $SerialText, '</td>';
+		// 	}
+		// 	echo '</tr>';
 
-		} else {
+		// } else {
 
 			echo '<tr class="striped_row">
 					<td>', $MyRow['typename'], '</td>
@@ -222,7 +222,7 @@ if (DB_num_rows($MovtsResult) > 0) {
 			}
 			echo '</tr>';
 
-		}
+		// }
 		//end of page full new headings if
 		
 	}
