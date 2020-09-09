@@ -203,27 +203,34 @@ if (isset($NewItem) AND isset($_POST['WO'])){
 		prnMsg(_('This item is already on the stock issue and cannot be added again'),'warn');
 		$InputError=true;
 	}
+   
 
 
 	if ($InputError==false){
-//		$CostResult = DB_query("SELECT SUM((materialcost+labourcost+overheadcost)*bom.quantity) AS cost
-//									FROM stockmaster INNER JOIN bom
-//									ON stockmaster.stockid=bom.component
-//									WHERE bom.parent='" . $NewItem . "'
-//									AND bom.loccode='" . $_POST['StockLocation'] . "'",
-//							 $db);
-//		$CostRow = DB_fetch_array($CostResult);
-//		if (is_null($CostRow['cost']) OR $CostRow['cost']==0){
-//				$Cost =0;
-//				prnMsg(_('The cost of this item as accumulated from the sum of the component costs is nil. This could be because there is no bill of material set up ... you may wish to double check this'),'warn');
-//		} else {
-//				$Cost = $CostRow['cost'];
-//		}
-//		if (!isset($EOQ)){
-//			$EOQ=1;
-//		}
 
 		$Result = DB_Txn_Begin($db);
+
+    //   if ($_SESSION['ProhibitNegativeStock']==1){
+	// 	//don't need to check labour or dummy items
+        $SQL = "SELECT stockmaster.description,
+                        locstock.quantity,
+                        stockmaster.mbflag
+                FROM locstock
+                INNER JOIN stockmaster
+                ON stockmaster.stockid=locstock.stockid
+                WHERE locstock.stockid ='" . $NewItem . "'
+                AND locstock.loccode ='" . $_POST['StockLocation'] . "'";
+                $CheckNegResult = DB_query($SQL);
+                $CheckNegRow = DB_fetch_array($CheckNegResult);
+                if (($CheckNegRow['quantity']) <= 0){
+                       $Input_Error = true;
+                prnMsg( _('Invoicing the selected order would result in negative stock. The system parameters are set to prohibit negative stocks from occurring. This invoice cannot be created until the stock on hand is corrected.'),'error',$_POST['OutputItem'.$i] . ' ' . $CheckNegRow['description'] . ' - ' . _('Negative Stock Prohibited'));
+                } 
+
+    
+    else {
+
+		
                 
                
 		// insert parent item info
@@ -248,7 +255,7 @@ if (isset($NewItem) AND isset($_POST['WO'])){
 	} //end if there were no input errors
 } //adding a new item to the work order
 
-
+}
 if (isset($_POST['submit']) or isset($_POST['Search'])) { //The update button has been clicked
 
 	echo '<div class="centre"><a href="' . htmlspecialchars($_SERVER['PHP_SELF'], ENT_QUOTES, 'UTF-8') .'">' . _('Enter a new stock issue') . '</a>';
@@ -346,7 +353,7 @@ if (isset($_POST['submit']) or isset($_POST['Search'])) { //The update button ha
 			                           $QtyOnHandPrior = 0;
 		                                   }
                                                    
-				$sql[] = "UPDATE stockmoves SET trandate =  '". $SQL_IssueDate . "', qty =  '". -$_POST['OutputQty' . $i] . "', prd =  '". $PeriodNo . "', loccode = '". $_POST['StockLocation'] ."', newqoh =  '".(($QtyOnHandPrior - $_POST['OutputQty' . $i]))."', groupid =  '". $_POST['LGroup'] . "', sectionid =  '". $_POST['LSection'] . "', costid =  '". $_POST['LCost'] . "', sourceref =  '".$_POST['source']."', reference =  '".$_POST['Narrative']."'				 
+				$sql[] = "UPDATE stockmoves SET trandate =  '". $SQL_IssueDate . "', qty =  '". -$_POST['OutputQty' . $i] . "', prd =  '". $PeriodNo . "', loccode = '". $_POST['StockLocation'] ."', newqoh =  '".(($QtyOnHandPrior - $_POST['OutputQty' . $i]))."', groupid =  '". $_POST['LGroup'] . "', sectionid =  '". $_POST['LSection'] . "', costid =  '". $_POST['LCost'] . "', sourceref =  '".$_POST['source']."' , userid =  '".$_SESSION['UserID']."', reference =  '".$_POST['Narrative']."'				 
 								  WHERE transno='" . $_POST['WO'] . "'
 								  AND stockid='" . $_POST['OutputItem'.$i] . "'";
                                 
