@@ -791,6 +791,7 @@ if (isset($SearchResult)) {
 						<td><font size="1">%s</font></td>
 						<td><font size="1">%s</font></td>
 						<td>%s</td>
+						<td><input type="text" name="Qty" size="10" /></td>
 						<td><font size="1"><a href="%s">'
 						. _('Add to Stock Issue') . '</a></font></td>
 						<td><input type="checkbox" value="%s" name="Check_%s" /></td>
@@ -812,6 +813,7 @@ if (isset($SearchResult)) {
 						<td><font size="1">%s</font></td>
 						<td><font size="1">%s</font></td>
 						<td>%s</td>
+						<td><input type="text" name="Qty" size="10" /></td>
 						<td><font size="1"><a href="%s">'
 						. _('Add to Stock Issue') . '</a></font></td>
 						</tr>',
